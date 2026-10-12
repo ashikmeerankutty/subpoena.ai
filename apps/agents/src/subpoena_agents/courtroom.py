@@ -22,6 +22,7 @@ from subpoena_schemas import (
     Channel,
     DebateSummaryItem,
     Decision,
+    DeliveryStatus,
     EvaluationStatus,
     EventType,
     EvidenceFinding,
@@ -481,6 +482,7 @@ class Courtroom:
             )
             return await self._finalize(ev, decision, p_fraud=ev.p_fraud, rationale=decision.reason)
         sub.channel = Channel(sent["channel"])
+        sub.channels_tried = [Channel(c) for c in sent.get("tried", [sent["channel"]])]
         sub.twilio_sid = sent.get("sid")
         await self.store.put_subpoena(sub)
 
@@ -534,6 +536,10 @@ class Courtroom:
         if ev is None:
             return None
         policy = await self._policy(ev)
+
+        undelivered = sub.delivery_status in (DeliveryStatus.FAILED, DeliveryStatus.UNDELIVERED)
+        if undelivered and not (sub.reply_text or sub.pending_code or sub.code_verified):
+            return await self._redeliver(ev, sub, policy)
 
         if sub.pending_code and not sub.code_verified:
             code, sub.pending_code = sub.pending_code, None
@@ -598,7 +604,8 @@ class Courtroom:
         await self.store.put_subpoena(sub)
 
         if not (sub.code_verified and sub.reply_text):
-            if sub.code_verified and not sub.reply_text:
+            # On a call the witness is asked for their answer right after the code.
+            if sub.code_verified and not sub.reply_text and sub.channel is not Channel.VOICE:
                 await self._reply(
                     sub, "Thanks, you're verified. Was this payment yours? Reply YES or NO."
                 )
@@ -783,6 +790,46 @@ class Courtroom:
             else "Thanks. An analyst will review this payment shortly.",
         )
         return await self._finalize(ev, decision, p_fraud=r.p_fraud, rationale=r.rationale)
+
+    async def _redeliver(self, ev: Evaluation, sub: Subpoena, policy: Policy) -> Evaluation:
+        """The provider reported the subpoena undelivered (WhatsApp window closed, call not
+        answered): send it again on the next channel the policy allows. The code already went
+        out by SMS, and the original deadline stands."""
+        failed = sub.channel
+        remaining = [c.value for c in policy.subpoena.channels if c not in sub.channels_tried]
+        sent: dict[str, Any] = {"sent": False, "reason": "no channels left"}
+        if remaining:
+            async with self.mcp.session(Agent.JUDGE) as judge:
+                sent = await self._tool(
+                    ev,
+                    judge,
+                    "issue_subpoena",
+                    evaluation_id=ev.evaluation_id,
+                    subpoena_id=sub.id,
+                    question=sub.question,
+                    channels=remaining,
+                )
+        sub.channels_tried += [Channel(c) for c in sent.get("tried", [])]
+        if sent.get("sent"):
+            sub.channel = Channel(sent["channel"])
+            sub.twilio_sid = sent.get("sid")
+            sub.delivery_status = DeliveryStatus.QUEUED
+        await self.store.put_subpoena(sub)
+        await self.emit(
+            ev,
+            Agent.JUDGE,
+            EventType.SUBPOENA_SENT,
+            {
+                "subpoena_id": sub.id,
+                "channel": sub.channel if sent.get("sent") else None,
+                "fallback_from": failed,
+                "delivered": bool(sent.get("sent")),
+                "reason": None if sent.get("sent") else sent.get("reason"),
+                "expires_at": sub.expires_at.isoformat(),
+            },
+            to=Agent.WITNESS,
+        )
+        return await self._save(ev, subpoena=sub.ref())
 
     async def handle_timeout(self, subpoena_id: str) -> Evaluation | None:
         async with self._locks.setdefault(subpoena_id, asyncio.Lock()):

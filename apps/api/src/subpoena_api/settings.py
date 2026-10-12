@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     sync_wait_max_ms: int = 30000
     google_client_id: str | None = None  # enables Console sign-in with Google
     twilio_account_sid: str | None = None  # needed to download photos witnesses send
+    twilio_voice_language: str = "en-US"  # subpoena calls: <Say> voice and speech recognition
     media_store: Literal["memory", "gcs"] = "memory"
     media_bucket: str | None = None
     max_media_bytes: int = 5_000_000

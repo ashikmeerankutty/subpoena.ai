@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/app/providers";
 import { PageHeader, Panel, useMe } from "@/components/Shell";
 import { api, usePoll } from "@/lib/api";
+import { CHANNELS } from "@/lib/format";
 
 interface Policy {
   id: string; version: number; active: boolean;
@@ -101,7 +102,27 @@ export default function PoliciesPage() {
                 <Option value="HOLD">Hold for analyst</Option><Option value="APPROVE">Approve</Option><Option value="BLOCK">Block</Option>
               </Select>
             </Box>
-            <Box><Label htmlFor="ch">Channels</Label><Text as="p" id="ch">{draft.subpoena.channels.join(" → ")}</Text></Box>
+            <Box style={{ gridColumn: "span 2" }}>
+              <Label htmlFor="ch">Channels, in order</Label>
+              <Box id="ch" display="flex" flexWrap="wrap" alignItems="center" columnGap="space30" rowGap="space30">
+                {draft.subpoena.channels.map((c, i, all) => (
+                  <Box key={c} display="flex" alignItems="center" columnGap="space20" paddingX="space30" paddingY="space20"
+                    borderRadius="borderRadius20" borderWidth="borderWidth10" borderStyle="solid" borderColor="colorBorderWeak">
+                    <Text as="span" fontWeight="fontWeightSemibold">{i + 1}. {CHANNELS[c] ?? c}</Text>
+                    <Button variant="secondary_icon" size="reset" disabled={i === 0} title="Try earlier"
+                      onClick={() => set(["subpoena", "channels"], [...all.slice(0, i - 1), c, all[i - 1], ...all.slice(i + 1)])}>↑</Button>
+                    <Button variant="secondary_icon" size="reset" disabled={all.length === 1} title="Remove"
+                      onClick={() => set(["subpoena", "channels"], all.filter((x) => x !== c))}>✕</Button>
+                  </Box>
+                ))}
+                {Object.keys(CHANNELS).filter((c) => !draft.subpoena.channels.includes(c)).map((c) => (
+                  <Button key={c} variant="link" size="small" onClick={() => set(["subpoena", "channels"], [...draft.subpoena.channels, c])}>
+                    + {CHANNELS[c]}
+                  </Button>
+                ))}
+              </Box>
+              <HelpText>The first channel the witness can use is tried first; if it isn't delivered (WhatsApp window closed, call not answered) the next one is.</HelpText>
+            </Box>
           </Box>
           <Text as="p" marginTop="space50" fontSize="fontSize20" color="colorTextWeak">
             Hard rules: sanctioned countries {active.hard_rules.sanctioned_countries.join(", ")} · amount ceiling ${active.hard_rules.amount_ceiling}

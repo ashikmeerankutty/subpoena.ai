@@ -7,7 +7,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 import { ReceiptCard } from "@/components/ReceiptCard";
 import { AGENTS } from "@/lib/agents";
-import { money, time } from "@/lib/format";
+import { channelName, money, time } from "@/lib/format";
 import type { Finding, PipelineEvent, ReceiptCheck } from "@/lib/types";
 
 const SEV: Record<string, "neutral" | "info" | "warning" | "error" | "decorative20"> = {
@@ -83,7 +83,12 @@ function Body({ e, findings }: { e: PipelineEvent; findings: Map<string, Finding
         <Text as="p" fontSize="fontSize20" color="colorTextWeak">{p.reason}</Text>
       </>;
     case "SUBPOENA_SENT":
-      return <Text as="p">Subpoena sent via <strong>{p.channel}</strong>: <em>“{p.question}”</em> — expires {time(p.expires_at)}</Text>;
+      if (p.fallback_from) {
+        return p.delivered
+          ? <Text as="p">Not delivered via <strong>{channelName(p.fallback_from)}</strong>; resent via <strong>{channelName(p.channel)}</strong> — still expires {time(p.expires_at)}</Text>
+          : <Text as="p">Not delivered via <strong>{channelName(p.fallback_from)}</strong> and no channel left ({p.reason}); waiting for a reply until {time(p.expires_at)}</Text>;
+      }
+      return <Text as="p">Subpoena sent via <strong>{channelName(p.channel)}</strong>: <em>“{p.question}”</em> — expires {time(p.expires_at)}</Text>;
     case "WITNESS_AUTH":
       return <Box display="flex" columnGap="space30" alignItems="center">
         <Badge as="span" size="small" variant={p.result === "PASSED" ? "success" : p.result === "NO_REPLY" ? "warning" : "error"}>{p.result}</Badge>

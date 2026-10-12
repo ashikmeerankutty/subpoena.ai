@@ -86,6 +86,10 @@ class Subpoena(SubpoenaRef):
     state: SubpoenaState = SubpoenaState.AWAITING_REPLY
     twilio_sid: str | None = None
     delivery_status: DeliveryStatus = DeliveryStatus.QUEUED
+    channels_tried: list[Channel] = Field(
+        default_factory=list,
+        description="Channels used so far; a failed delivery moves to the next",
+    )
     lookup: dict[str, object] = Field(default_factory=dict, description="Lookup result")
     reply_text: str | None = None
     pending_code: str | None = Field(default=None, description="Code awaiting a Bailiff check")

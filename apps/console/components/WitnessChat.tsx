@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "@/app/providers";
 import { api, usePoll } from "@/lib/api";
-import { time } from "@/lib/format";
+import { channelName, time } from "@/lib/format";
 import type { WitnessMessage } from "@/lib/types";
 
 /** Mirrored WhatsApp/SMS conversation, with a phone simulator for demos. */
@@ -70,7 +70,7 @@ export function WitnessChat({ phone, simulator }: { phone: string; simulator: bo
     <Box borderRadius="borderRadius30" overflow="hidden" borderWidth="borderWidth10" borderStyle="solid" borderColor="colorBorderWeaker">
       <Box paddingX="space50" paddingY="space40" style={{ background: "#075e54", color: "white" }}>
         <Text as="div" color="colorTextInverse" fontWeight="fontWeightSemibold">{phone}</Text>
-        <Text as="div" color="colorTextInverseWeak" fontSize="fontSize20">WhatsApp / SMS mirror{simulator ? " · simulator" : ""}</Text>
+        <Text as="div" color="colorTextInverseWeak" fontSize="fontSize20">WhatsApp, SMS and calls{simulator ? " · simulator" : ""}</Text>
       </Box>
       <div ref={box} style={{ background: "#efeae2", maxHeight: 420, overflowY: "auto", padding: 20 }}>
         <ChatLog>
@@ -83,10 +83,11 @@ export function WitnessChat({ phone, simulator }: { phone: string; simulator: bo
                       style={{ display: "block", borderRadius: 6, marginBottom: m.body ? 6 : 0 }} />
                   </a>
                 ))}
+                {m.channel === "VOICE" ? <strong>{m.direction === "INBOUND" ? "🎙️ Said on the call: " : "📞 Call: "}</strong> : null}
                 {m.body}
               </ChatBubble>
               <ChatMessageMeta aria-label={`${m.direction} ${m.channel} at ${time(m.created_at)}`}>
-                <ChatMessageMetaItem>{m.channel} · {time(m.created_at)} · {m.status.toLowerCase()}</ChatMessageMetaItem>
+                <ChatMessageMetaItem>{channelName(m.channel)} · {time(m.created_at)} · {m.status.toLowerCase()}</ChatMessageMetaItem>
               </ChatMessageMeta>
             </ChatMessage>
           ))}

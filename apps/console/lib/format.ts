@@ -22,3 +22,6 @@ export const seconds = (s: number | null | undefined) =>
 export const usd = (x: number | null | undefined) => (x == null ? "—" : `$${x.toFixed(x < 0.1 ? 4 : 2)}`);
 
 export const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase().replaceAll("_", " ");
+
+export const CHANNELS: Record<string, string> = { WHATSAPP: "WhatsApp", SMS: "SMS", VOICE: "Phone call" };
+export const channelName = (c: string | null | undefined) => (c ? CHANNELS[c] ?? c : "—");

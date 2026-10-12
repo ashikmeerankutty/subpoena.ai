@@ -4,6 +4,10 @@ Inbound messages are matched to the witness's open subpoena by phone number. A 6
 in the message is held for the Bailiff to verify; any other text is the (untrusted) reply;
 photos (e.g. a receipt) go to the media store for the courtroom's receipt check.
 The courtroom is then nudged over ``subpoena.activity``; nothing here interprets the content.
+
+Subpoena calls work the same way: the keypad code and the transcribed spoken answer are
+recorded as inbound VOICE messages. A subpoena that can't be delivered (message failed, call
+not answered) also nudges the courtroom, which retries on the next channel.
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ import hmac
 import logging
 import re
 from typing import Annotated
+from xml.sax.saxutils import escape
 
 import httpx
 from fastapi import APIRouter, Depends, Request, Response
@@ -162,6 +167,158 @@ async def twilio_status(request: Request, services: ServicesDep) -> Response:
     sid, status = params.get("MessageSid"), params.get("MessageStatus", "").upper()
     if sid and status in DeliveryStatus.__members__:
         await services.store.update_message_status(sid, status)
+        phone = params.get("To", "").removeprefix("whatsapp:")
+        await _subpoena_delivery(services, phone, sid, DeliveryStatus(status))
+    return Response(status_code=204)
+
+
+FAILED = (DeliveryStatus.FAILED, DeliveryStatus.UNDELIVERED)
+
+
+async def _subpoena_delivery(
+    services: Services, phone: str, sid: str, status: DeliveryStatus
+) -> None:
+    """Track the subpoena's own delivery; a failure hands it back to the courtroom."""
+    sub = await services.store.find_open_subpoena(phone)
+    if sub is None or sub.twilio_sid != sid or sub.delivery_status in FAILED:
+        return
+    sub.delivery_status = status
+    await services.store.put_subpoena(sub)
+    if status in FAILED:
+        await services.publisher.publish_subpoena_activity(sub.id)
+
+
+# ---------------------------------------------------------------- subpoena calls
+
+CALL_STATUS = {
+    "queued": DeliveryStatus.QUEUED,
+    "initiated": DeliveryStatus.QUEUED,
+    "ringing": DeliveryStatus.SENT,
+    "in-progress": DeliveryStatus.DELIVERED,
+    "completed": DeliveryStatus.DELIVERED,
+    "busy": DeliveryStatus.UNDELIVERED,
+    "no-answer": DeliveryStatus.UNDELIVERED,
+    "canceled": DeliveryStatus.UNDELIVERED,
+    "failed": DeliveryStatus.FAILED,
+}
+GENERIC_SCRIPT = "This is your bank's security team, calling about a recent payment on your card."
+
+
+def _twiml(*parts: str) -> Response:
+    return Response(
+        '<?xml version="1.0" encoding="UTF-8"?><Response>' + "".join(parts) + "</Response>",
+        media_type="application/xml",
+    )
+
+
+def _say(services: Services, text: str) -> str:
+    lang = escape(services.settings.twilio_voice_language, {'"': "&quot;"})
+    return f'<Say language="{lang}">{escape(text)}</Say>'
+
+
+def _gather(services: Services, step: str, prompt: str, **attrs: str) -> str:
+    url = escape(
+        services.settings.public_base_url.rstrip("/") + f"/v1/webhooks/twilio/voice/{step}"
+    )
+    extra = "".join(f' {k}="{escape(v)}"' for k, v in attrs.items())
+    return f'<Gather action="{url}" method="POST"{extra}>{_say(services, prompt)}</Gather>'
+
+
+def _witness(params: dict[str, str]) -> str:
+    # Our calls go *to* the witness; a witness calling back is the caller.
+    return params.get("From", "") if params.get("Direction") == "inbound" else params.get("To", "")
+
+
+async def _ask_for_code(services: Services, script: str) -> Response:
+    return _twiml(
+        _say(services, script),
+        '<Pause length="1"/>',
+        _gather(
+            services,
+            "code",
+            "We have just texted you a 6-digit code. Please enter it on your keypad now.",
+            input="dtmf",
+            numDigits="6",
+            timeout="20",
+        ),
+        _say(
+            services,
+            "We did not receive a code. You can reply to our text message instead. Goodbye.",
+        ),
+    )
+
+
+@router.post("/v1/webhooks/twilio/voice/start", include_in_schema=False)
+async def voice_start(request: Request, services: ServicesDep) -> Response:
+    """Our subpoena call connected: read the script the Judge's tool stored for this call."""
+    params = await _verified_form(request, services)
+    sid = params.get("CallSid")
+    msgs = await services.store.list_messages(_witness(params), limit=20)
+    script = next((m.body for m in reversed(msgs) if m.sid and m.sid == sid), GENERIC_SCRIPT)
+    return await _ask_for_code(services, script)
+
+
+@router.post("/v1/webhooks/twilio/voice/inbound", include_in_schema=False)
+async def voice_inbound(request: Request, services: ServicesDep) -> Response:
+    """The witness called our number back."""
+    params = await _verified_form(request, services)
+    sub = await services.store.find_open_subpoena(_witness(params))
+    if sub is None:
+        return _twiml(
+            _say(
+                services,
+                "There is no open request for this number. Please call the number on the back of your card. Goodbye.",
+            ),
+        )
+    return await _ask_for_code(services, f"{GENERIC_SCRIPT} {sub.question}")
+
+
+@router.post("/v1/webhooks/twilio/voice/code", include_in_schema=False)
+async def voice_code(request: Request, services: ServicesDep) -> Response:
+    params = await _verified_form(request, services)
+    digits = re.sub(r"\D", "", params.get("Digits", ""))
+    if digits:
+        await record_inbound(
+            services, _witness(params), digits, Channel.VOICE, params.get("CallSid")
+        )
+    return _twiml(
+        _gather(
+            services,
+            "answer",
+            "Thank you. Now please tell us, in a few words, whether you made this payment.",
+            input="speech",
+            speechTimeout="auto",
+            timeout="8",
+            language=services.settings.twilio_voice_language,
+        ),
+        _say(
+            services,
+            "We did not hear an answer. You can reply to our text message instead. Goodbye.",
+        ),
+    )
+
+
+@router.post("/v1/webhooks/twilio/voice/answer", include_in_schema=False)
+async def voice_answer(request: Request, services: ServicesDep) -> Response:
+    params = await _verified_form(request, services)
+    speech = params.get("SpeechResult", "").strip()
+    if speech:
+        await record_inbound(
+            services, _witness(params), speech, Channel.VOICE, params.get("CallSid")
+        )
+    return _twiml(
+        _say(services, "Thank you. We will text you the outcome shortly. Goodbye."),
+        "<Hangup/>",
+    )
+
+
+@router.post("/v1/webhooks/twilio/voice/status", include_in_schema=False)
+async def voice_status(request: Request, services: ServicesDep) -> Response:
+    params = await _verified_form(request, services)
+    sid, status = params.get("CallSid"), CALL_STATUS.get(params.get("CallStatus", ""))
+    if sid and status:
+        await services.store.update_message_status(sid, status.value)
+        await _subpoena_delivery(services, _witness(params), sid, status)
     return Response(status_code=204)
 
 

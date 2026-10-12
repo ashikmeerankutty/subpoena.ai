@@ -154,3 +154,36 @@ def test_rejected_message_falls_back_to_the_simulator_when_enabled(fallback: boo
     else:
         with pytest.raises(TwilioError, match="63007"):
             asyncio.run(witness.send_message(LIVE, "question", Channel.WHATSAPP, context={}))
+
+
+def test_sms_uses_the_phone_number_when_there_is_no_messaging_service() -> None:
+    channel = TwilioChannel(MemoryStore(), twilio_settings(twilio_phone_number="+15005550006"))
+    seen = fake_twilio(channel, {})
+    asyncio.run(channel.send_message(LIVE, "hello", Channel.SMS, context={}))
+    form = dict(httpx.QueryParams(seen[0].content.decode()))
+    assert form == {"To": LIVE, "From": "+15005550006", "Body": "hello"}
+
+
+def test_voice_subpoena_places_a_call_that_fetches_its_script_from_the_api() -> None:
+    store = MemoryStore()
+    settings = twilio_settings(
+        twilio_phone_number="+15005550006", twilio_webhook_base_url="https://api.example/"
+    )
+    channel = TwilioChannel(store, settings)
+    seen = fake_twilio(channel, {})
+    msg = asyncio.run(channel.send_message(LIVE, "Hi, about a payment", Channel.VOICE, context={}))
+    assert seen[0].url.path.endswith("/Calls.json")
+    form = dict(httpx.QueryParams(seen[0].content.decode()))
+    assert form["Url"] == "https://api.example/v1/webhooks/twilio/voice/start"
+    assert form["StatusCallback"] == "https://api.example/v1/webhooks/twilio/voice/status"
+    assert "Twiml" not in form and "payment" not in str(form)  # the script stays server-side
+    stored = asyncio.run(store.list_messages(LIVE))
+    assert stored[0].channel is Channel.VOICE and stored[0].body == "Hi, about a payment"
+    assert msg.sid == "SMlive"
+
+
+def test_voice_needs_a_number_and_webhook_url() -> None:
+    channel = TwilioChannel(MemoryStore(), twilio_settings())
+    fake_twilio(channel, {})
+    with pytest.raises(RuntimeError, match="voice calls need"):
+        asyncio.run(channel.send_message(LIVE, "hi", Channel.VOICE, context={}))

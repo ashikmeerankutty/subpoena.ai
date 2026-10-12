@@ -82,6 +82,15 @@ phone, set the sandbox's inbound URL to `$API/v1/webhooks/twilio/inbound` and re
 Then `uv run python -m subpoena_agents.demo --api $API --key $KEY --live-phone +<your number>`
 sends the auto-parts subpoena to WhatsApp; reply and send the SMS code in the same chat.
 
+For calls and two-way SMS, buy a Twilio Voice+SMS number, point its "A call comes in" webhook at
+`$API/v1/webhooks/twilio/voice/inbound` and "A message comes in" at
+`$API/v1/webhooks/twilio/inbound`, enable your country in Voice and SMS geo permissions, add
+`TWILIO_PHONE_NUMBER=+1...` (and optionally `TWILIO_VOICE_LANGUAGE=en-IN`) to `.env.twilio`, add
+"Phone call" to the policy's subpoena channels in the Console and redeploy. Then add
+`--channels VOICE` to the demo command: the call reads the question, asks for the texted code on
+the keypad and records the spoken answer. If a subpoena isn't delivered (WhatsApp window closed,
+call not answered) it is resent on the next channel in the policy.
+
 ## Calling the API
 
 ```bash

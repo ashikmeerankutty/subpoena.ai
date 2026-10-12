@@ -13,7 +13,7 @@ import { PageHeader, Panel, useMe } from "@/components/Shell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { WitnessChat } from "@/components/WitnessChat";
 import { usePoll } from "@/lib/api";
-import { ago, money, seconds, time } from "@/lib/format";
+import { ago, channelName, money, seconds, time } from "@/lib/format";
 import type { Subpoena } from "@/lib/types";
 
 const STATE: Record<string, ["new" | "success" | "error" | "warning" | "neutral", string]> = {
@@ -44,7 +44,7 @@ export default function SubpoenasPage() {
                 <Tr key={s.id} onClick={() => setOpenId(s.id)}>
                   <Td><Text as="span" fontSize="fontSize20" color="colorTextWeak">{ago(s.sent_at)}</Text></Td>
                   <Td>{s.user_id}<br /><Text as="span" fontSize="fontSize20" color="colorTextWeak">{s.phone}</Text></Td>
-                  <Td>{s.channel}</Td>
+                  <Td>{channelName(s.channel)}</Td>
                   <Td><Text as="span" fontSize="fontSize20">{s.question}</Text></Td>
                   <Td><Badge as="span" size="small" variant={variant}>{label}</Badge></Td>
                   <Td>{s.state === "AUTH_FAILED" || s.state === "CODE_FAILED" ? "FAILED" : s.code_verified ? "PASSED" : "pending"}</Td>

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import logging
 import secrets
 from datetime import timedelta
@@ -138,28 +139,30 @@ class TwilioChannel:
         self, phone: str, body: str, channel: Channel, *, context: dict[str, Any]
     ) -> WitnessMessage:
         s = self._s
+        if channel is Channel.VOICE:
+            return await self._call(phone, body, context=context)
         data: dict[str, str] = {}
         if channel is Channel.WHATSAPP:
             if not s.twilio_whatsapp_from:
                 raise RuntimeError("WhatsApp sender not configured")
             data |= {"To": f"whatsapp:{phone}", "From": s.twilio_whatsapp_from}
             if s.twilio_whatsapp_content_sid:
-                import json
-
                 data |= {
                     "ContentSid": s.twilio_whatsapp_content_sid,
                     "ContentVariables": json.dumps({"1": body}),
                 }
             else:
                 data["Body"] = body
-        else:
-            if not s.twilio_messaging_service_sid:
-                raise RuntimeError("SMS messaging service not configured")
+        elif s.twilio_messaging_service_sid:
             data |= {
                 "To": phone,
                 "MessagingServiceSid": s.twilio_messaging_service_sid,
                 "Body": body,
             }
+        elif s.twilio_phone_number:
+            data |= {"To": phone, "From": s.twilio_phone_number, "Body": body}
+        else:
+            raise RuntimeError("SMS sender not configured")
         if s.twilio_status_callback_url:
             data["StatusCallback"] = s.twilio_status_callback_url
         res = await self._post(
@@ -170,6 +173,34 @@ class TwilioChannel:
             direction=MessageDirection.OUTBOUND,
             channel=channel,
             body=body,
+            sid=res.get("sid"),
+            status=DeliveryStatus.QUEUED,
+            **context,
+        )
+        await self._store.put_message(msg)
+        return msg
+
+    async def _call(self, phone: str, script: str, *, context: dict[str, Any]) -> WitnessMessage:
+        s = self._s
+        if not (s.twilio_phone_number and s.twilio_webhook_base_url):
+            raise RuntimeError("voice calls need a Twilio phone number and the API webhook URL")
+        base = s.twilio_webhook_base_url.rstrip("/")
+        res = await self._post(
+            f"https://api.twilio.com/2010-04-01/Accounts/{s.twilio_account_sid}/Calls.json",
+            {
+                "To": phone,
+                "From": s.twilio_phone_number,
+                # The API serves the call script (the WitnessMessage stored below) when it connects.
+                "Url": f"{base}/v1/webhooks/twilio/voice/start",
+                "StatusCallback": f"{base}/v1/webhooks/twilio/voice/status",
+                "Timeout": "30",
+            },
+        )
+        msg = WitnessMessage(
+            phone=phone,
+            direction=MessageDirection.OUTBOUND,
+            channel=Channel.VOICE,
+            body=script,
             sid=res.get("sid"),
             status=DeliveryStatus.QUEUED,
             **context,

@@ -147,7 +147,7 @@ subpoena.ai/
 - [x] Policies editor with versioning and simulate-against-history.
 - [x] Precedents library with vector search used by Defense/Judge.
 - [x] Receipt-photo testimony via Gemini vision.
-- [ ] Voice subpoena via Twilio ConversationRelay.
+- [x] Voice subpoena: Twilio call (keypad code + transcribed spoken answer), two-way SMS, and fallback to the next channel when a subpoena isn't delivered.
 - [x] Audit Log and Settings pages.
 
 ### M6 — Demo Hardening

@@ -31,6 +31,11 @@ class McpSettings(BaseSettings):
     twilio_account_sid: str | None = None
     twilio_auth_token: SecretStr | None = None
     twilio_messaging_service_sid: str | None = None
+    twilio_phone_number: str | None = (
+        None  # E.164; SMS sender (if no messaging service) and caller ID
+    )
+    # Public API base URL; it serves the call script and receives the keypad code and answer.
+    twilio_webhook_base_url: str | None = None
     twilio_whatsapp_from: str | None = None  # e.g. whatsapp:+14155238886 (sandbox)
     twilio_whatsapp_content_sid: str | None = None  # approved subpoena template
     twilio_verify_service_sid: str | None = None

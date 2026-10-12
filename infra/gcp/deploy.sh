@@ -6,7 +6,10 @@
 # Real witness messaging (optional): put TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
 # TWILIO_VERIFY_SERVICE_SID, TWILIO_LIVE_NUMBERS (comma-separated E.164) and optionally
 # TWILIO_WHATSAPP_FROM and TWILIO_MESSAGE_FALLBACK=true (deliver rejected messages to the Console
-# phone; codes still go by real SMS) in .env.twilio at the repo root.
+# phone; codes still go by real SMS) in .env.twilio at the repo root. For SMS replies and
+# subpoena calls add TWILIO_PHONE_NUMBER (a Voice+SMS number whose webhooks point at
+# $API/v1/webhooks/twilio/inbound and $API/v1/webhooks/twilio/voice/inbound) and optionally
+# TWILIO_VOICE_LANGUAGE (default en-US, e.g. en-IN).
 #
 # Console sign-in with Google (optional): put GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET of a
 # "Web application" OAuth client in .env.google; its redirect URI must be
@@ -162,11 +165,13 @@ if [ -n "$TWILIO" ]; then
   MCP_ENV+="|SUBPOENA_TWILIO_VERIFY_SERVICE_SID=$TWILIO_VERIFY_SERVICE_SID|SUBPOENA_TWILIO_LIVE_NUMBERS=${TWILIO_LIVE_NUMBERS:-}"
   MCP_ENV+="|SUBPOENA_TWILIO_WHATSAPP_FROM=${TWILIO_WHATSAPP_FROM:-whatsapp:+14155238886}"
   MCP_ENV+="|SUBPOENA_TWILIO_MESSAGE_FALLBACK=${TWILIO_MESSAGE_FALLBACK:-false}"
+  MCP_ENV+="|SUBPOENA_TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER:-}"
   # Trial accounts get no carrier SIM-swap data; set SUBPOENA_SIM_SWAP_REQUIRED=true once enabled.
   MCP_ENV+="|SUBPOENA_SIM_SWAP_REQUIRED=${TWILIO_SIM_SWAP_REQUIRED:-false}"
   MCP_SECRETS+=",SUBPOENA_TWILIO_AUTH_TOKEN=twilio-auth-token:latest"
   API_SECRETS+=",SUBPOENA_TWILIO_AUTH_TOKEN=twilio-auth-token:latest"
   API_ENV+=",SUBPOENA_TWILIO_ACCOUNT_SID=$TWILIO_ACCOUNT_SID"  # to download witness photos
+  API_ENV+=",SUBPOENA_TWILIO_VOICE_LANGUAGE=${TWILIO_VOICE_LANGUAGE:-en-US}"
 fi
 
 echo "==> MCP server"
@@ -214,7 +219,7 @@ API_URL=$($G run services describe subpoena-api --region="$REGION" --format='val
 $G run services update subpoena-api --region="$REGION" --update-env-vars="SUBPOENA_PUBLIC_BASE_URL=$API_URL" >/dev/null
 if [ -n "$TWILIO" ]; then
   $G run services update subpoena-mcp --region="$REGION" \
-    --update-env-vars="SUBPOENA_TWILIO_STATUS_CALLBACK_URL=$API_URL/v1/webhooks/twilio/status" >/dev/null
+    --update-env-vars="SUBPOENA_TWILIO_STATUS_CALLBACK_URL=$API_URL/v1/webhooks/twilio/status,SUBPOENA_TWILIO_WEBHOOK_BASE_URL=$API_URL" >/dev/null
 fi
 
 echo "==> Console"

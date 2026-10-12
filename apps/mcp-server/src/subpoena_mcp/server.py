@@ -135,8 +135,10 @@ def build_server(agent: Agent, deps: McpDeps) -> MCPServer:
             "evaluation_id": sub.evaluation_id,
             "subpoena_id": sub.id,
         }
-        msg = await deps.witness.send_message(sub.phone, body[:500], sub.channel, context=ctx)
-        return {"sent": True, "sid": msg.sid}
+        # A call can't be extended after it ends; follow-ups to a voice witness go by text.
+        channel = Channel.SMS if sub.channel is Channel.VOICE else sub.channel
+        msg = await deps.witness.send_message(sub.phone, body[:500], channel, context=ctx)
+        return {"sent": True, "sid": msg.sid, "channel": channel.value}
 
     @tool
     async def issue_subpoena(
@@ -145,8 +147,8 @@ def build_server(agent: Agent, deps: McpDeps) -> MCPServer:
         question: str,
         channels: list[str],
     ) -> dict[str, Any]:
-        """Send the subpoena question to the cardholder over the first available channel
-        (Judge only). Returns the channel used and the provider message id."""
+        """Send the subpoena question to the cardholder over the first channel, in order, that
+        accepts it (Judge only). Returns the channel used, the channels tried and the provider id."""
         evaluation = await _evaluation(deps.store, evaluation_id)
         witness = evaluation.witness
         if witness is None:
@@ -156,21 +158,35 @@ def build_server(agent: Agent, deps: McpDeps) -> MCPServer:
         user = deps.data.user(evaluation.transaction.user_id) or {}
         first = str(user.get("name", "")).split(" ")[0] or "there"
         t = evaluation.transaction
-        body = (
-            f"Hi {first}, this is {bank} Security. We're checking a {_money(t.amount)} payment to "
-            f"{t.merchant.name}. {question.strip()} Reply YES or NO, or tell us more, and also "
-            "send the 6-digit code we just texted you. A photo of the receipt helps too."
+        intro = f"Hi {first}, this is {bank} Security"
+        payment = f"a {_money(t.amount)} payment to {t.merchant.name}"
+        bodies = {
+            Channel.VOICE: (
+                f"{intro}, calling about {payment}. {question.strip()} "
+                "We will ask you for a code, and then for your answer."
+            ),
+            Channel.SMS: (
+                f"{intro}. We're checking {payment}. {question.strip()} Reply YES or NO, or tell "
+                "us more, with the 6-digit code we just texted you."
+            ),
+        }
+        default = (
+            f"{intro}. We're checking {payment}. {question.strip()} Reply YES or NO, or tell us "
+            "more, and also send the 6-digit code we just texted you. A photo of the receipt "
+            "helps too."
         )
         ctx = {
             "workspace_id": evaluation.workspace_id,
             "evaluation_id": evaluation_id,
             "subpoena_id": subpoena_id,
         }
-        errors = []
+        errors, tried = [], []
         for name in channels:
             channel = Channel(name)
             if channel not in witness.allowed_channels:
                 continue
+            tried.append(channel.value)
+            body = bodies.get(channel, default)
             try:
                 msg = await deps.witness.send_message(witness.phone, body, channel, context=ctx)
             except Exception as exc:  # fall back to the next channel
@@ -179,11 +195,12 @@ def build_server(agent: Agent, deps: McpDeps) -> MCPServer:
             return {
                 "sent": True,
                 "channel": channel.value,
+                "tried": tried,
                 "sid": msg.sid,
                 "phone": witness.phone,
                 "body": body,
             }
-        return {"sent": False, "reason": "; ".join(errors) or "no allowed channel"}
+        return {"sent": False, "tried": tried, "reason": "; ".join(errors) or "no allowed channel"}
 
     return server
 
