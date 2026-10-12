@@ -3,6 +3,12 @@
 #
 #   infra/gcp/deploy.sh [PROJECT_ID] [REGION]
 #
+# Real witness messaging (optional): put TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
+# TWILIO_VERIFY_SERVICE_SID, TWILIO_LIVE_NUMBERS (comma-separated E.164) and optionally
+# TWILIO_WHATSAPP_FROM and TWILIO_MESSAGE_FALLBACK=true (deliver rejected messages to the Console
+# phone; codes still go by real SMS) in .env.twilio at the repo root. Only the listed numbers are contacted
+# through Twilio; seeded demo witnesses stay on the simulator.
+#
 # Services (Cloud Run): api (public, API-key auth), console (public, key login),
 # mcp (private), courtroom (private; Pub/Sub push + Cloud Tasks with OIDC).
 set -euo pipefail
@@ -30,6 +36,19 @@ for s in api-key-pepper agent-token-secret webhook-signing-secret; do
     openssl rand -hex 32 | tr -d '\n' | $G secrets create "$s" --data-file=- --replication-policy=automatic
 done
 
+TWILIO=""
+if [ -f "$ROOT/.env.twilio" ]; then
+  set -a; . "$ROOT/.env.twilio"; set +a
+  TWILIO=1
+  echo "==> Twilio secret"
+  $G secrets describe twilio-auth-token >/dev/null 2>&1 ||
+    $G secrets create twilio-auth-token --replication-policy=automatic >/dev/null
+  # Add a version only when the token changed.
+  if [ "$($G secrets versions access latest --secret=twilio-auth-token 2>/dev/null)" != "$TWILIO_AUTH_TOKEN" ]; then
+    printf %s "$TWILIO_AUTH_TOKEN" | $G secrets versions add twilio-auth-token --data-file=- >/dev/null
+  fi
+fi
+
 echo "==> Service accounts"
 for a in sp-api sp-mcp sp-court sp-console sp-invoker; do
   $G iam service-accounts describe "$(sa $a)" >/dev/null 2>&1 ||
@@ -51,6 +70,11 @@ for s in agent-token-secret webhook-signing-secret; do
   $G secrets add-iam-policy-binding "$s" --member="serviceAccount:$(sa sp-court)" --role=roles/secretmanager.secretAccessor >/dev/null
 done
 $G secrets add-iam-policy-binding agent-token-secret --member="serviceAccount:$(sa sp-mcp)" --role=roles/secretmanager.secretAccessor >/dev/null
+if [ -n "$TWILIO" ]; then
+  for a in sp-mcp sp-api; do
+    $G secrets add-iam-policy-binding twilio-auth-token --member="serviceAccount:$(sa $a)" --role=roles/secretmanager.secretAccessor >/dev/null
+  done
+fi
 # The courtroom mints OIDC tokens as sp-invoker for Cloud Tasks.
 $G iam service-accounts add-iam-policy-binding "$(sa sp-invoker)" --member="serviceAccount:$(sa sp-court)" --role=roles/iam.serviceAccountUser >/dev/null
 NUM=$($G projects describe "$PROJECT" --format='value(projectNumber)')
@@ -73,11 +97,25 @@ fi
 COMMON=(--region="$REGION" --image="$REPO/backend:$TAG" --min-instances=0 --cpu=1)
 ENV="SUBPOENA_ENV=demo,SUBPOENA_GCP_PROJECT=$PROJECT,SUBPOENA_STORE=firestore"
 
+MCP_ENV="APP=subpoena_mcp.app:create_app,$ENV,SUBPOENA_DATA=bigquery,SUBPOENA_WITNESS_CHANNEL=simulator"
+MCP_SECRETS="SUBPOENA_AGENT_TOKEN_SECRET=agent-token-secret:latest"
+API_SECRETS="SUBPOENA_API_KEY_PEPPER=api-key-pepper:latest,SUBPOENA_WEBHOOK_SIGNING_SECRET=webhook-signing-secret:latest"
+if [ -n "$TWILIO" ]; then
+  # '^|^' switches gcloud's list delimiter so the comma-separated number list survives.
+  MCP_ENV="^|^${MCP_ENV//,/|}|SUBPOENA_WITNESS_CHANNEL=twilio|SUBPOENA_TWILIO_ACCOUNT_SID=$TWILIO_ACCOUNT_SID"
+  MCP_ENV+="|SUBPOENA_TWILIO_VERIFY_SERVICE_SID=$TWILIO_VERIFY_SERVICE_SID|SUBPOENA_TWILIO_LIVE_NUMBERS=${TWILIO_LIVE_NUMBERS:-}"
+  MCP_ENV+="|SUBPOENA_TWILIO_WHATSAPP_FROM=${TWILIO_WHATSAPP_FROM:-whatsapp:+14155238886}"
+  MCP_ENV+="|SUBPOENA_TWILIO_MESSAGE_FALLBACK=${TWILIO_MESSAGE_FALLBACK:-false}"
+  # Trial accounts get no carrier SIM-swap data; set SUBPOENA_SIM_SWAP_REQUIRED=true once enabled.
+  MCP_ENV+="|SUBPOENA_SIM_SWAP_REQUIRED=${TWILIO_SIM_SWAP_REQUIRED:-false}"
+  MCP_SECRETS+=",SUBPOENA_TWILIO_AUTH_TOKEN=twilio-auth-token:latest"
+  API_SECRETS+=",SUBPOENA_TWILIO_AUTH_TOKEN=twilio-auth-token:latest"
+fi
+
 echo "==> MCP server"
 $G run deploy subpoena-mcp "${COMMON[@]}" --service-account="$(sa sp-mcp)" --no-allow-unauthenticated \
   --memory=512Mi --max-instances=3 --concurrency=40 \
-  --set-env-vars="APP=subpoena_mcp.app:create_app,$ENV,SUBPOENA_DATA=bigquery,SUBPOENA_WITNESS_CHANNEL=simulator" \
-  --set-secrets="SUBPOENA_AGENT_TOKEN_SECRET=agent-token-secret:latest"
+  --set-env-vars="$MCP_ENV" --set-secrets="$MCP_SECRETS"
 MCP_URL=$($G run services describe subpoena-mcp --region="$REGION" --format='value(status.url)')
 $G run services add-iam-policy-binding subpoena-mcp --region="$REGION" --member="serviceAccount:$(sa sp-court)" --role=roles/run.invoker >/dev/null
 
@@ -115,9 +153,13 @@ echo "==> API"
 $G run deploy subpoena-api "${COMMON[@]}" --service-account="$(sa sp-api)" --no-invoker-iam-check \
   --memory=512Mi --max-instances=3 --concurrency=80 \
   --set-env-vars="APP=subpoena_api.main:create_app,$ENV,SUBPOENA_PUBLISHER=pubsub,SUBPOENA_BASELINES=firestore,SUBPOENA_WITNESS_SIMULATOR=true" \
-  --set-secrets="SUBPOENA_API_KEY_PEPPER=api-key-pepper:latest,SUBPOENA_WEBHOOK_SIGNING_SECRET=webhook-signing-secret:latest"
+  --set-secrets="$API_SECRETS"
 API_URL=$($G run services describe subpoena-api --region="$REGION" --format='value(status.url)')
 $G run services update subpoena-api --region="$REGION" --update-env-vars="SUBPOENA_PUBLIC_BASE_URL=$API_URL" >/dev/null
+if [ -n "$TWILIO" ]; then
+  $G run services update subpoena-mcp --region="$REGION" \
+    --update-env-vars="SUBPOENA_TWILIO_STATUS_CALLBACK_URL=$API_URL/v1/webhooks/twilio/status" >/dev/null
+fi
 
 echo "==> Console"
 $G run deploy subpoena-console --region="$REGION" --image="$REPO/console:$TAG" --service-account="$(sa sp-console)" \

@@ -26,7 +26,7 @@ from subpoena_store import MemoryStore, Store
 from .config import McpSettings
 from .data import BigQueryData, DataSource, SeedData
 from .server import McpDeps, build_server
-from .witness import SimulatorChannel, TwilioChannel, WitnessChannel
+from .witness import RoutedChannel, SimulatorChannel, TwilioChannel, WitnessChannel
 
 TOKEN_HEADER = "x-agent-token"
 
@@ -55,16 +55,20 @@ def build_deps(settings: McpSettings, store: Store | None = None) -> McpDeps:
         data = BigQueryData(settings.seed_dir, settings.gcp_project, settings.bq_dataset)
     else:
         data = SeedData(settings.seed_dir)
-    witness: WitnessChannel = (
-        TwilioChannel(store, settings)
-        if settings.witness_channel == "twilio"
-        else SimulatorChannel(store, data)
-    )
+    witness: WitnessChannel = SimulatorChannel(store, data)
+    if settings.witness_channel == "twilio":
+        witness = RoutedChannel(
+            settings.live_numbers,
+            TwilioChannel(store, settings),
+            witness,
+            fallback=settings.twilio_message_fallback,
+        )
     return McpDeps(
         data=data,
         store=store,
         witness=witness,
         sim_swap_window=timedelta(days=settings.sim_swap_window_days),
+        sim_swap_required=settings.sim_swap_required,
     )
 
 

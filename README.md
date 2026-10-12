@@ -74,6 +74,14 @@ uv run python data/seed/load_gcp.py --project <project-id>     # BigQuery + Fire
 The script prints the API and Console URLs and the command to bootstrap a workspace admin key.
 All services scale to zero; see [docs/decisions.md](./docs/decisions.md#cost) for the cost posture.
 
+### Live witness on a real phone
+
+Put `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` and
+`TWILIO_LIVE_NUMBERS=+<your number>` in `.env.twilio`, join the Twilio WhatsApp sandbox from that
+phone, set the sandbox's inbound URL to `$API/v1/webhooks/twilio/inbound` and rerun `deploy.sh`.
+Then `uv run python -m subpoena_agents.demo --api $API --key $KEY --live-phone +<your number>`
+sends the auto-parts subpoena to WhatsApp; reply and send the SMS code in the same chat.
+
 ## Calling the API
 
 ```bash
