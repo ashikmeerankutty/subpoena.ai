@@ -107,3 +107,44 @@ def test_subpoenas_messages_verifications(make: Callable[[], Store]) -> None:
         assert [e.sequence for e in await store.list_events("e", after_sequence=0)] == [1, 2]
 
     asyncio.run(go())
+
+
+@pytest.mark.parametrize("make", BACKENDS)
+def test_members_and_audit(make: Callable[[], Store]) -> None:
+    from subpoena_schemas import Actor, ActorType, AuditEntry, Member, Role
+
+    async def go() -> None:
+        store = make()
+        a = Member(workspace_id="ws_a", email="ana@bank.test", role=Role.ADMIN)
+        b = Member(workspace_id="ws_b", email="ana@bank.test")
+        c = Member(workspace_id="ws_a", email="cy@bank.test")
+        for m in (a, b, c):
+            await store.put_member(m)
+        assert [m.id for m in await store.list_members("ws_a")] == [a.id, c.id]
+        assert {m.workspace_id for m in await store.find_members_by_email("ANA@bank.test")} == {
+            "ws_a",
+            "ws_b",
+        }
+        assert await store.get_member("ws_b", a.id) is None  # scoped to its workspace
+        await store.delete_member("ws_b", c.id)  # wrong workspace: no-op
+        await store.delete_member("ws_a", c.id)
+        assert [m.id for m in await store.list_members("ws_a")] == [a.id]
+
+        actor = Actor(type=ActorType.MEMBER, id=a.id, name=a.email)
+        t0 = utcnow()
+        for i in range(3):
+            await store.append_audit(
+                AuditEntry(
+                    workspace_id="ws_a",
+                    actor=actor,
+                    action=f"test.{i}",
+                    at=t0 + timedelta(seconds=i),
+                    after={"i": i},
+                )
+            )
+        await store.append_audit(AuditEntry(workspace_id="ws_b", actor=actor, action="other"))
+        rows = await store.list_audit("ws_a", limit=2)
+        assert [r.action for r in rows] == ["test.2", "test.1"]
+        assert rows[0].after == {"i": 2}
+
+    asyncio.run(go())

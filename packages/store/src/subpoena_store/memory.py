@@ -7,8 +7,10 @@ from typing import Any
 
 from subpoena_schemas import (
     ApiKey,
+    AuditEntry,
     DeliveryStatus,
     Evaluation,
+    Member,
     PipelineEvent,
     Policy,
     Subpoena,
@@ -34,6 +36,8 @@ class MemoryStore:
         self._messages: list[WitnessMessage] = []
         self._verifications: dict[str, Verification] = {}
         self.feedback: list[dict[str, Any]] = []
+        self._members: dict[str, Member] = {}
+        self._audit: list[AuditEntry] = []
         self._lock = asyncio.Lock()
 
     async def put_workspace(self, ws: Workspace) -> None:
@@ -174,3 +178,28 @@ class MemoryStore:
 
     async def put_feedback(self, workspace_id: str, record: dict[str, Any]) -> None:
         self.feedback.append({"workspace_id": workspace_id, **record})
+
+    async def put_member(self, member: Member) -> None:
+        self._members[member.id] = member
+
+    async def get_member(self, workspace_id: str, member_id: str) -> Member | None:
+        m = self._members.get(member_id)
+        return m if m and m.workspace_id == workspace_id else None
+
+    async def list_members(self, workspace_id: str) -> list[Member]:
+        rows = [m for m in self._members.values() if m.workspace_id == workspace_id]
+        return sorted(rows, key=lambda m: m.created_at)
+
+    async def find_members_by_email(self, email: str) -> list[Member]:
+        return [m for m in self._members.values() if m.email == email.lower()]
+
+    async def delete_member(self, workspace_id: str, member_id: str) -> None:
+        if await self.get_member(workspace_id, member_id):
+            del self._members[member_id]
+
+    async def append_audit(self, entry: AuditEntry) -> None:
+        self._audit.append(entry)
+
+    async def list_audit(self, workspace_id: str, limit: int) -> list[AuditEntry]:
+        rows = [a for a in self._audit if a.workspace_id == workspace_id]
+        return sorted(rows, key=lambda a: a.at, reverse=True)[:limit]

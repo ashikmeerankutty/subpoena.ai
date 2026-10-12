@@ -107,9 +107,32 @@ export interface Page<T> {
   meta: { next_page_token: string | null };
 }
 
+export type Role = "ADMIN" | "ANALYST" | "VIEWER";
+
 export interface Me {
-  workspace: { id: string; name: string };
+  workspace: { id: string; name: string; settings?: { pii_masking: boolean } };
   key: { id: string; name: string; prefix: string; scopes: string[] };
-  role: "ADMIN" | "ANALYST" | "VIEWER";
+  role: Role;
+  principal: { type: "MEMBER" | "API_KEY"; name: string; email: string | null; expires_at: string | null };
   simulator: boolean;
+}
+
+export interface Member {
+  id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  added_by: string | null;
+  created_at: string;
+  last_login_at: string | null;
+}
+
+export interface AuditEntry {
+  id: string;
+  actor: { type: "API_KEY" | "MEMBER" | "SYSTEM"; id: string | null; name: string };
+  action: string;
+  target: string | null;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  at: string;
 }

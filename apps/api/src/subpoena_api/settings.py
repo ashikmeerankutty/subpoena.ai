@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     webhook_signing_secret: SecretStr = SecretStr("dev-only-webhook-secret")
     sync_poll_interval_ms: int = 250
     sync_wait_max_ms: int = 30000
+    google_client_id: str | None = None  # enables Console sign-in with Google
 
     @property
     def key_mode(self) -> str:

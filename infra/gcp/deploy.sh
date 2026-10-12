@@ -6,7 +6,11 @@
 # Real witness messaging (optional): put TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
 # TWILIO_VERIFY_SERVICE_SID, TWILIO_LIVE_NUMBERS (comma-separated E.164) and optionally
 # TWILIO_WHATSAPP_FROM and TWILIO_MESSAGE_FALLBACK=true (deliver rejected messages to the Console
-# phone; codes still go by real SMS) in .env.twilio at the repo root. Only the listed numbers are contacted
+# phone; codes still go by real SMS) in .env.twilio at the repo root.
+#
+# Console sign-in with Google (optional): put GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET of a
+# "Web application" OAuth client in .env.google; its redirect URI must be
+# <console url>/api/auth/google/callback. Add members with `subpoena_api.admin add-member`. Only the listed numbers are contacted
 # through Twilio; seeded demo witnesses stay on the simulator.
 #
 # Services (Cloud Run): api (public, API-key auth), console (public, key login),
@@ -49,6 +53,18 @@ if [ -f "$ROOT/.env.twilio" ]; then
   fi
 fi
 
+GOOGLE=""
+if [ -f "$ROOT/.env.google" ]; then
+  set -a; . "$ROOT/.env.google"; set +a
+  GOOGLE=1
+  echo "==> Google OAuth secret"
+  $G secrets describe google-client-secret >/dev/null 2>&1 ||
+    $G secrets create google-client-secret --replication-policy=automatic >/dev/null
+  if [ "$($G secrets versions access latest --secret=google-client-secret 2>/dev/null)" != "$GOOGLE_CLIENT_SECRET" ]; then
+    printf %s "$GOOGLE_CLIENT_SECRET" | $G secrets versions add google-client-secret --data-file=- >/dev/null
+  fi
+fi
+
 echo "==> Service accounts"
 for a in sp-api sp-mcp sp-court sp-console sp-invoker; do
   $G iam service-accounts describe "$(sa $a)" >/dev/null 2>&1 ||
@@ -70,6 +86,9 @@ for s in agent-token-secret webhook-signing-secret; do
   $G secrets add-iam-policy-binding "$s" --member="serviceAccount:$(sa sp-court)" --role=roles/secretmanager.secretAccessor >/dev/null
 done
 $G secrets add-iam-policy-binding agent-token-secret --member="serviceAccount:$(sa sp-mcp)" --role=roles/secretmanager.secretAccessor >/dev/null
+if [ -n "$GOOGLE" ]; then
+  $G secrets add-iam-policy-binding google-client-secret --member="serviceAccount:$(sa sp-console)" --role=roles/secretmanager.secretAccessor >/dev/null
+fi
 if [ -n "$TWILIO" ]; then
   for a in sp-mcp sp-api; do
     $G secrets add-iam-policy-binding twilio-auth-token --member="serviceAccount:$(sa $a)" --role=roles/secretmanager.secretAccessor >/dev/null
@@ -100,6 +119,12 @@ ENV="SUBPOENA_ENV=demo,SUBPOENA_GCP_PROJECT=$PROJECT,SUBPOENA_STORE=firestore"
 MCP_ENV="APP=subpoena_mcp.app:create_app,$ENV,SUBPOENA_DATA=bigquery,SUBPOENA_WITNESS_CHANNEL=simulator"
 MCP_SECRETS="SUBPOENA_AGENT_TOKEN_SECRET=agent-token-secret:latest"
 API_SECRETS="SUBPOENA_API_KEY_PEPPER=api-key-pepper:latest,SUBPOENA_WEBHOOK_SIGNING_SECRET=webhook-signing-secret:latest"
+API_ENV="APP=subpoena_api.main:create_app,$ENV,SUBPOENA_PUBLISHER=pubsub,SUBPOENA_BASELINES=firestore,SUBPOENA_WITNESS_SIMULATOR=true"
+CONSOLE_ARGS=()
+if [ -n "$GOOGLE" ]; then
+  API_ENV+=",SUBPOENA_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+  CONSOLE_ARGS=(--set-secrets="GOOGLE_CLIENT_SECRET=google-client-secret:latest")
+fi
 if [ -n "$TWILIO" ]; then
   # '^|^' switches gcloud's list delimiter so the comma-separated number list survives.
   MCP_ENV="^|^${MCP_ENV//,/|}|SUBPOENA_WITNESS_CHANNEL=twilio|SUBPOENA_TWILIO_ACCOUNT_SID=$TWILIO_ACCOUNT_SID"
@@ -152,8 +177,7 @@ done
 echo "==> API"
 $G run deploy subpoena-api "${COMMON[@]}" --service-account="$(sa sp-api)" --no-invoker-iam-check \
   --memory=512Mi --max-instances=3 --concurrency=80 \
-  --set-env-vars="APP=subpoena_api.main:create_app,$ENV,SUBPOENA_PUBLISHER=pubsub,SUBPOENA_BASELINES=firestore,SUBPOENA_WITNESS_SIMULATOR=true" \
-  --set-secrets="$API_SECRETS"
+  --set-env-vars="$API_ENV" --set-secrets="$API_SECRETS"
 API_URL=$($G run services describe subpoena-api --region="$REGION" --format='value(status.url)')
 $G run services update subpoena-api --region="$REGION" --update-env-vars="SUBPOENA_PUBLIC_BASE_URL=$API_URL" >/dev/null
 if [ -n "$TWILIO" ]; then
@@ -164,8 +188,10 @@ fi
 echo "==> Console"
 $G run deploy subpoena-console --region="$REGION" --image="$REPO/console:$TAG" --service-account="$(sa sp-console)" \
   --allow-unauthenticated --min-instances=0 --max-instances=2 --memory=512Mi \
-  --set-env-vars="SUBPOENA_API_URL=$API_URL"
+  --set-env-vars="SUBPOENA_API_URL=$API_URL${GOOGLE:+,GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID}" "${CONSOLE_ARGS[@]}"
 CONSOLE_URL=$($G run services describe subpoena-console --region="$REGION" --format='value(status.url)')
+# OAuth redirects must use the URL registered with Google, not the request's internal origin.
+$G run services update subpoena-console --region="$REGION" --update-env-vars="CONSOLE_PUBLIC_URL=$CONSOLE_URL" >/dev/null
 
 cat <<OUT
 

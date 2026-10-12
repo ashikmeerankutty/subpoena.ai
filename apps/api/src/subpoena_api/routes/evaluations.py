@@ -32,7 +32,7 @@ from subpoena_schemas import (
 )
 from subpoena_store import EvaluationFilters, IdempotencyRecord
 
-from ..deps import Services, ServicesDep, active_policy, require
+from ..deps import Services, ServicesDep, active_policy, audit, require
 from ..pagination import decode_cursor, encode_cursor
 from ..problems import ProblemError
 from ..tier0 import prescreen
@@ -303,6 +303,14 @@ async def override(
                 "reason": body.reason,
             },
         )
+    await audit(
+        services,
+        key,
+        "evaluation.overridden",
+        evaluation_id,
+        before={"verdict": record["previous_verdict"], "status": record["previous_status"]},
+        after={"verdict": body.verdict, "status": EvaluationStatus.APPEALED, "reason": body.reason},
+    )
     await services.notifier.notify(
         ev,
         "evaluation.overridden",

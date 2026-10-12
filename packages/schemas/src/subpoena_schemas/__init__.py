@@ -1,6 +1,7 @@
 """Shared schemas: the single source of truth for API payloads, agent outputs and storage."""
 
 from .agents import ArgumentOut, ClaimOut, ExpertFindingOut, ExpertReport, ExplanationOut, RulingOut
+from .audit import Actor, ActorType, AuditEntry
 from .baseline import GeoPoint, UserBaseline
 from .common import (
     Agent,
@@ -56,14 +57,31 @@ from .transaction import (
     TransactionMetadata,
     Witness,
 )
-from .workspace import ApiKey, ApiKeyCreated, ApiKeyPublic, Scope, Source, SourceType, Workspace
+from .workspace import (
+    ROLE_SCOPES,
+    ApiKey,
+    ApiKeyCreated,
+    ApiKeyPublic,
+    KeyKind,
+    Member,
+    Scope,
+    Source,
+    SourceType,
+    Workspace,
+    WorkspaceSettings,
+    role_for,
+)
 
 __all__ = [
+    "ROLE_SCOPES",
+    "Actor",
+    "ActorType",
     "Agent",
     "ApiKey",
     "ApiKeyCreated",
     "ApiKeyPublic",
     "ArgumentOut",
+    "AuditEntry",
     "Channel",
     "Claim",
     "ClaimOut",
@@ -82,7 +100,9 @@ __all__ = [
     "ExplanationOut",
     "GeoPoint",
     "HardRules",
+    "KeyKind",
     "Links",
+    "Member",
     "Merchant",
     "MessageDirection",
     "Model",
@@ -118,8 +138,10 @@ __all__ = [
     "WitnessAuthResult",
     "WitnessMessage",
     "Workspace",
+    "WorkspaceSettings",
     "decide",
     "decide_after_testimony",
     "new_id",
+    "role_for",
     "utcnow",
 ]

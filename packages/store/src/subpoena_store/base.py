@@ -8,8 +8,10 @@ from typing import Any, Protocol
 
 from subpoena_schemas import (
     ApiKey,
+    AuditEntry,
     Evaluation,
     EvaluationStatus,
+    Member,
     PipelineEvent,
     Policy,
     Subpoena,
@@ -119,3 +121,19 @@ class Store(Protocol):
 
     # Labels
     async def put_feedback(self, workspace_id: str, record: dict[str, Any]) -> None: ...
+
+    # Members (Console users)
+    async def put_member(self, member: Member) -> None: ...
+    async def get_member(self, workspace_id: str, member_id: str) -> Member | None: ...
+    async def list_members(self, workspace_id: str) -> list[Member]: ...
+    async def find_members_by_email(self, email: str) -> list[Member]:
+        """Every workspace membership of ``email`` (lower-cased), for sign-in."""
+        ...
+
+    async def delete_member(self, workspace_id: str, member_id: str) -> None: ...
+
+    # Audit log (append-only)
+    async def append_audit(self, entry: AuditEntry) -> None: ...
+    async def list_audit(self, workspace_id: str, limit: int) -> list[AuditEntry]:
+        """Newest first."""
+        ...

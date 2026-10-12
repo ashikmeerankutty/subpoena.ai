@@ -7,7 +7,7 @@ from enum import StrEnum
 
 from pydantic import Field
 
-from .common import Model, new_id, utcnow
+from .common import Model, Role, new_id, utcnow
 
 
 class Scope(StrEnum):
@@ -17,12 +17,52 @@ class Scope(StrEnum):
     ADMIN = "admin"
 
 
+ROLE_SCOPES: dict[Role, list[Scope]] = {
+    Role.ADMIN: [Scope.ADMIN],
+    Role.ANALYST: [Scope.EVALUATIONS_READ, Scope.EVALUATIONS_WRITE, Scope.EVALUATIONS_OVERRIDE],
+    Role.VIEWER: [Scope.EVALUATIONS_READ],
+}
+
+
+def role_for(scopes: list[Scope]) -> Role:
+    if Scope.ADMIN in scopes:
+        return Role.ADMIN
+    if Scope.EVALUATIONS_OVERRIDE in scopes:
+        return Role.ANALYST
+    return Role.VIEWER
+
+
+class WorkspaceSettings(Model):
+    pii_masking: bool = Field(
+        default=True, description="Mask phone numbers, IP addresses and emails for VIEWERs"
+    )
+
+
 class Workspace(Model):
     id: str = Field(default_factory=lambda: new_id("ws"))
     name: str
     region: str = "us-central1"
     plan: str = "hackathon"
+    settings: WorkspaceSettings = Field(default_factory=WorkspaceSettings)
     created_at: datetime = Field(default_factory=utcnow)
+
+
+class Member(Model):
+    """A Console user (Google account) and their role in one workspace (Spec §9)."""
+
+    id: str = Field(default_factory=lambda: new_id("mem"))
+    workspace_id: str
+    email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    name: str | None = None
+    role: Role = Role.VIEWER
+    added_by: str | None = None
+    created_at: datetime = Field(default_factory=utcnow)
+    last_login_at: datetime | None = None
+
+
+class KeyKind(StrEnum):
+    API_KEY = "API_KEY"
+    SESSION = "SESSION"  # short-lived Console sign-in, scopes derived from the member's role
 
 
 class ApiKey(Model):
@@ -36,6 +76,9 @@ class ApiKey(Model):
     created_at: datetime = Field(default_factory=utcnow)
     last_used_at: datetime | None = None
     revoked_at: datetime | None = None
+    kind: KeyKind = KeyKind.API_KEY
+    member_id: str | None = None
+    expires_at: datetime | None = None
 
 
 class ApiKeyPublic(Model):
@@ -50,7 +93,9 @@ class ApiKeyPublic(Model):
 
     @classmethod
     def from_key(cls, key: ApiKey) -> ApiKeyPublic:
-        return cls.model_validate(key.model_dump(exclude={"workspace_id", "hash"}))
+        return cls.model_validate(
+            key.model_dump(exclude={"workspace_id", "hash", "kind", "member_id", "expires_at"})
+        )
 
 
 class ApiKeyCreated(ApiKeyPublic):
