@@ -1,0 +1,481 @@
+{
+  "nodes": {
+    "flagged": [
+      {
+        "id": "acct_mule_01",
+        "kind": "ACCOUNT",
+        "flag": "MULE",
+        "since": "2026-08-14"
+      },
+      {
+        "id": "acct_mule_02",
+        "kind": "ACCOUNT",
+        "flag": "MULE",
+        "since": "2026-08-14"
+      },
+      {
+        "id": "acct_mule_03",
+        "kind": "ACCOUNT",
+        "flag": "MULE",
+        "since": "2026-08-14"
+      },
+      {
+        "id": "dev-mule-shared-01",
+        "kind": "DEVICE",
+        "flag": "MULE_LINKED"
+      },
+      {
+        "id": "198.51.100.66",
+        "kind": "IP",
+        "flag": "MULE_LINKED"
+      },
+      {
+        "id": "payee_quickcash_7781",
+        "kind": "PAYEE",
+        "flag": "MULE_LINKED"
+      }
+    ]
+  },
+  "edges": [
+    {
+      "src": "usr_9921",
+      "dst": "dev-alex-iphone15",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_9921",
+      "dst": "dev-alex-macbook",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_9921",
+      "dst": "198.18.10.21",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_9921",
+      "dst": "198.18.10.22",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_2002",
+      "dst": "dev-sam-pixel8",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_2002",
+      "dst": "198.18.20.40",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_3003",
+      "dst": "dev-jordan-galaxy",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_3003",
+      "dst": "198.18.30.77",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4000",
+      "dst": "dev-bd9cad3c2d6d",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4000",
+      "dst": "198.18.44.152",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4000",
+      "dst": "198.18.216.9",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4000",
+      "dst": "198.18.15.24",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4001",
+      "dst": "dev-72ff386ecbe0",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4001",
+      "dst": "dev-473796da1dac",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4001",
+      "dst": "198.18.81.179",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4002",
+      "dst": "dev-d8f55be6128e",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4002",
+      "dst": "198.18.135.207",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4002",
+      "dst": "198.18.22.187",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4003",
+      "dst": "dev-313993cd59bf",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4003",
+      "dst": "dev-11ceb45ed1f0",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4003",
+      "dst": "198.18.116.198",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4004",
+      "dst": "dev-5af35ec42e08",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4004",
+      "dst": "198.18.136.180",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4005",
+      "dst": "dev-451b6123fdf7",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4005",
+      "dst": "dev-ece6fd5166e6",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4005",
+      "dst": "198.18.112.176",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4005",
+      "dst": "198.18.166.216",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4005",
+      "dst": "198.18.28.59",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4006",
+      "dst": "dev-366e508ebad7",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4006",
+      "dst": "dev-7fcda7cad415",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4006",
+      "dst": "dev-e27a654821d0",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4006",
+      "dst": "198.18.234.37",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4006",
+      "dst": "198.18.135.36",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4006",
+      "dst": "198.18.126.191",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4007",
+      "dst": "dev-7e57827050a8",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4007",
+      "dst": "198.18.24.221",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4008",
+      "dst": "dev-405c877409a9",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4008",
+      "dst": "dev-8da0f89897b9",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4008",
+      "dst": "198.18.58.175",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4009",
+      "dst": "dev-b83ce037e5ed",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4009",
+      "dst": "dev-f8cd436d76e2",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4009",
+      "dst": "dev-c30f8026695f",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4009",
+      "dst": "198.18.54.223",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4010",
+      "dst": "dev-0025eb2263dd",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4010",
+      "dst": "dev-52fb99546eb4",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4010",
+      "dst": "dev-04fc7d154385",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4010",
+      "dst": "198.18.185.225",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4011",
+      "dst": "dev-7c69bb5e4bcf",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4011",
+      "dst": "198.18.64.33",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4012",
+      "dst": "dev-badcc1590f53",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4012",
+      "dst": "dev-337eb09b2a5c",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4012",
+      "dst": "dev-4fccb683d2e6",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4012",
+      "dst": "198.18.191.113",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4012",
+      "dst": "198.18.231.31",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4013",
+      "dst": "dev-a18fb535106e",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4013",
+      "dst": "198.18.117.18",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4014",
+      "dst": "dev-b92d21df306f",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4014",
+      "dst": "dev-e1e3ef7ddc76",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4014",
+      "dst": "dev-9382922fe15a",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4014",
+      "dst": "198.18.124.201",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4014",
+      "dst": "198.18.242.207",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4015",
+      "dst": "dev-a748ac619e63",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4015",
+      "dst": "198.18.50.16",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4015",
+      "dst": "198.18.206.187",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4015",
+      "dst": "198.18.173.205",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4016",
+      "dst": "dev-dfde3ff350bf",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4016",
+      "dst": "dev-134cec5b227c",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4016",
+      "dst": "198.18.50.13",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4016",
+      "dst": "198.18.7.249",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4017",
+      "dst": "dev-61042a25a888",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4017",
+      "dst": "198.18.199.68",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4018",
+      "dst": "dev-b7e9a97065e1",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4018",
+      "dst": "dev-27a07c967f79",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4018",
+      "dst": "dev-4bf5309d258c",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4018",
+      "dst": "198.18.29.149",
+      "type": "USES_IP"
+    },
+    {
+      "src": "usr_4019",
+      "dst": "dev-0e8f284d82e5",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4019",
+      "dst": "dev-8201f5f59b22",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4019",
+      "dst": "dev-d9f114822f53",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "usr_4019",
+      "dst": "198.18.35.153",
+      "type": "USES_IP"
+    },
+    {
+      "src": "acct_mule_01",
+      "dst": "dev-mule-shared-01",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "acct_mule_01",
+      "dst": "198.51.100.66",
+      "type": "USES_IP"
+    },
+    {
+      "src": "payee_quickcash_7781",
+      "dst": "acct_mule_01",
+      "type": "PAYS_OUT_TO"
+    },
+    {
+      "src": "acct_mule_02",
+      "dst": "dev-mule-shared-01",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "acct_mule_02",
+      "dst": "198.51.100.66",
+      "type": "USES_IP"
+    },
+    {
+      "src": "payee_quickcash_7781",
+      "dst": "acct_mule_02",
+      "type": "PAYS_OUT_TO"
+    },
+    {
+      "src": "acct_mule_03",
+      "dst": "dev-mule-shared-01",
+      "type": "USES_DEVICE"
+    },
+    {
+      "src": "acct_mule_03",
+      "dst": "198.51.100.66",
+      "type": "USES_IP"
+    },
+    {
+      "src": "payee_quickcash_7781",
+      "dst": "acct_mule_03",
+      "type": "PAYS_OUT_TO"
+    }
+  ]
+}

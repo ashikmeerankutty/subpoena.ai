@@ -1,0 +1,175 @@
+[
+  {
+    "name": "coffee",
+    "description": "Routine $12 coffee on a known card — exits Tier 0 approved.",
+    "expected": {
+      "tier0_route": "EXIT_APPROVE",
+      "verdict": "APPROVE"
+    },
+    "request": {
+      "currency": "USD",
+      "options": {
+        "sync_timeout_ms": 8000
+      },
+      "transaction_id": "tx_demo_coffee",
+      "user_id": "usr_9921",
+      "amount": 12.4,
+      "type": "CARD_PRESENT",
+      "occurred_at": "2026-10-09T15:32:10Z",
+      "merchant": {
+        "name": "Blue Bottle Coffee",
+        "mcc": "5814",
+        "country": "US"
+      },
+      "metadata": {},
+      "witness": {
+        "phone": "+14155550123",
+        "allowed_channels": [
+          "WHATSAPP",
+          "SMS"
+        ]
+      }
+    }
+  },
+  {
+    "name": "auto_parts_deadlock",
+    "description": "$4,500 auto parts at 2:14 AM local from a new device — goes to court, deadlocks, subpoena; cardholder confirms → APPROVE.",
+    "expected": {
+      "tier0_route": "COURT",
+      "first_ruling": "SUBPOENA",
+      "verdict": "APPROVE"
+    },
+    "request": {
+      "currency": "USD",
+      "options": {
+        "sync_timeout_ms": 8000
+      },
+      "transaction_id": "tx_8839201",
+      "user_id": "usr_9921",
+      "amount": 4500.0,
+      "type": "CARD_NOT_PRESENT",
+      "occurred_at": "2026-10-09T09:14:03Z",
+      "merchant": {
+        "name": "AutoZone Online",
+        "mcc": "5533",
+        "country": "US"
+      },
+      "metadata": {
+        "ip_address": "203.0.113.44",
+        "device_fingerprint": "abc-123",
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5)"
+      },
+      "witness": {
+        "phone": "+14155550123",
+        "allowed_channels": [
+          "WHATSAPP",
+          "SMS"
+        ],
+        "locale": "en-US"
+      }
+    },
+    "testimony": {
+      "reply": "Yes, parts for my BMW E36 project",
+      "otp_passes": true
+    }
+  },
+  {
+    "name": "sim_swap",
+    "description": "Same purchase pattern for a user whose SIM was swapped yesterday — Bailiff Lookup fails → BLOCK + ESCALATE.",
+    "expected": {
+      "tier0_route": "COURT",
+      "first_ruling": "SUBPOENA",
+      "verdict": "BLOCK",
+      "status": "ESCALATED"
+    },
+    "request": {
+      "currency": "USD",
+      "options": {
+        "sync_timeout_ms": 8000
+      },
+      "transaction_id": "tx_demo_simswap",
+      "user_id": "usr_2002",
+      "amount": 4500.0,
+      "type": "CARD_NOT_PRESENT",
+      "occurred_at": "2026-10-09T09:20:41Z",
+      "merchant": {
+        "name": "AutoZone Online",
+        "mcc": "5533",
+        "country": "US"
+      },
+      "metadata": {
+        "ip_address": "203.0.113.90",
+        "device_fingerprint": "dev-unknown-7f3a"
+      },
+      "witness": {
+        "phone": "+14155550188",
+        "allowed_channels": [
+          "WHATSAPP",
+          "SMS"
+        ]
+      }
+    }
+  },
+  {
+    "name": "clear_fraud",
+    "description": "$9,800 P2P to a mule-linked payee from a mule-ring IP — the courtroom blocks without bothering the customer.",
+    "expected": {
+      "tier0_route": "COURT",
+      "verdict": "BLOCK"
+    },
+    "request": {
+      "currency": "USD",
+      "options": {
+        "sync_timeout_ms": 8000
+      },
+      "transaction_id": "tx_demo_mule",
+      "user_id": "usr_3003",
+      "amount": 9800.0,
+      "type": "P2P",
+      "occurred_at": "2026-10-09T08:03:55Z",
+      "merchant": {
+        "name": "QuickCash Transfers",
+        "mcc": "4829",
+        "country": "US"
+      },
+      "metadata": {
+        "ip_address": "198.51.100.66",
+        "device_fingerprint": "dev-mule-shared-01"
+      },
+      "witness": {
+        "phone": "+13125550147",
+        "allowed_channels": [
+          "SMS"
+        ]
+      }
+    }
+  },
+  {
+    "name": "sanctioned_country",
+    "description": "Merchant in a sanctioned country — blocked by a Tier 0 hard rule.",
+    "expected": {
+      "tier0_route": "EXIT_BLOCK",
+      "verdict": "BLOCK"
+    },
+    "request": {
+      "currency": "USD",
+      "options": {
+        "sync_timeout_ms": 8000
+      },
+      "transaction_id": "tx_demo_sanctioned",
+      "user_id": "usr_3003",
+      "amount": 250.0,
+      "type": "CARD_NOT_PRESENT",
+      "occurred_at": "2026-10-09T13:00:00Z",
+      "merchant": {
+        "name": "Pyongyang Trading Co",
+        "mcc": "5999",
+        "country": "KP"
+      },
+      "metadata": {
+        "ip_address": "198.18.30.77",
+        "device_fingerprint": "dev-jordan-galaxy"
+      }
+    }
+  }
+]

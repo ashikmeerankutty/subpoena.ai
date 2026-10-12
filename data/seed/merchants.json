@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Blue Bottle Coffee",
+    "mcc": "5814",
+    "status": "VERIFIED",
+    "website": "bluebottlecoffee.com",
+    "since": "2002"
+  },
+  {
+    "name": "Safeway",
+    "mcc": "5411",
+    "status": "VERIFIED",
+    "website": "safeway.com",
+    "since": "1915"
+  },
+  {
+    "name": "Chevron",
+    "mcc": "5541",
+    "status": "VERIFIED",
+    "website": "chevron.com",
+    "since": "1879"
+  },
+  {
+    "name": "Netflix",
+    "mcc": "4899",
+    "status": "VERIFIED",
+    "website": "netflix.com",
+    "since": "1997"
+  },
+  {
+    "name": "Amazon.com",
+    "mcc": "5942",
+    "status": "VERIFIED",
+    "website": "amazon.com",
+    "since": "1994"
+  },
+  {
+    "name": "Chipotle",
+    "mcc": "5814",
+    "status": "VERIFIED",
+    "website": "chipotle.com",
+    "since": "1993"
+  },
+  {
+    "name": "AutoZone Online",
+    "mcc": "5533",
+    "status": "VERIFIED",
+    "website": "autozone.com",
+    "since": "1979"
+  },
+  {
+    "name": "FCP Euro",
+    "mcc": "5533",
+    "status": "VERIFIED",
+    "website": "fcpeuro.com",
+    "since": "1986"
+  },
+  {
+    "name": "Pelican Parts",
+    "mcc": "5533",
+    "status": "VERIFIED",
+    "website": "pelicanparts.com",
+    "since": "1995"
+  },
+  {
+    "name": "Best Buy",
+    "mcc": "5732",
+    "status": "VERIFIED",
+    "website": "bestbuy.com",
+    "since": "1966"
+  },
+  {
+    "name": "Tiffany & Co.",
+    "mcc": "5944",
+    "status": "VERIFIED",
+    "website": "tiffany.com",
+    "since": "1837"
+  },
+  {
+    "name": "QuickCash Transfers",
+    "mcc": "4829",
+    "status": "UNVERIFIED",
+    "since": "2026-09-17",
+    "note": "No business registration found; domain registered 3 weeks ago"
+  },
+  {
+    "name": "Pyongyang Trading Co",
+    "mcc": "5999",
+    "status": "SANCTIONED",
+    "note": "OFAC SDN list match"
+  }
+]

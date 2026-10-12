@@ -1,0 +1,354 @@
+{
+  "198.18.10.21": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.10.22": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.20.40": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.30.77": {
+    "lat": 41.8781,
+    "lng": -87.6298,
+    "city": "Chicago",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.44.152": {
+    "lat": 38.7223,
+    "lng": -9.1393,
+    "city": "Lisbon",
+    "country": "PT",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.216.9": {
+    "lat": 38.7223,
+    "lng": -9.1393,
+    "city": "Lisbon",
+    "country": "PT",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.15.24": {
+    "lat": 38.7223,
+    "lng": -9.1393,
+    "city": "Lisbon",
+    "country": "PT",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.81.179": {
+    "lat": 47.6062,
+    "lng": -122.3321,
+    "city": "Seattle",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.135.207": {
+    "lat": 41.8781,
+    "lng": -87.6298,
+    "city": "Chicago",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.22.187": {
+    "lat": 41.8781,
+    "lng": -87.6298,
+    "city": "Chicago",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.116.198": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.136.180": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.112.176": {
+    "lat": 38.7223,
+    "lng": -9.1393,
+    "city": "Lisbon",
+    "country": "PT",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.166.216": {
+    "lat": 38.7223,
+    "lng": -9.1393,
+    "city": "Lisbon",
+    "country": "PT",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.28.59": {
+    "lat": 38.7223,
+    "lng": -9.1393,
+    "city": "Lisbon",
+    "country": "PT",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.234.37": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.135.36": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.126.191": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.24.221": {
+    "lat": 41.8781,
+    "lng": -87.6298,
+    "city": "Chicago",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.58.175": {
+    "lat": 38.7223,
+    "lng": -9.1393,
+    "city": "Lisbon",
+    "country": "PT",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.54.223": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.185.225": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.64.33": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.191.113": {
+    "lat": 47.6062,
+    "lng": -122.3321,
+    "city": "Seattle",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.231.31": {
+    "lat": 47.6062,
+    "lng": -122.3321,
+    "city": "Seattle",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.117.18": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.124.201": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.242.207": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.50.16": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.206.187": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.173.205": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.50.13": {
+    "lat": 40.7128,
+    "lng": -74.006,
+    "city": "New York",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.7.249": {
+    "lat": 40.7128,
+    "lng": -74.006,
+    "city": "New York",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.199.68": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.29.149": {
+    "lat": 51.5072,
+    "lng": -0.1276,
+    "city": "London",
+    "country": "GB",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.18.35.153": {
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "city": "San Francisco",
+    "country": "US",
+    "asn": 7922,
+    "asn_org": "Comcast Cable",
+    "asn_type": "RESIDENTIAL"
+  },
+  "203.0.113.44": {
+    "lat": 37.8044,
+    "lng": -122.2712,
+    "city": "Oakland",
+    "country": "US",
+    "asn": 7018,
+    "asn_org": "AT&T Services",
+    "asn_type": "RESIDENTIAL"
+  },
+  "203.0.113.90": {
+    "lat": 34.0522,
+    "lng": -118.2437,
+    "city": "Los Angeles",
+    "country": "US",
+    "asn": 7018,
+    "asn_org": "AT&T Services",
+    "asn_type": "RESIDENTIAL"
+  },
+  "198.51.100.66": {
+    "lat": 6.5244,
+    "lng": 3.3792,
+    "city": "Lagos",
+    "country": "NG",
+    "asn": 9009,
+    "asn_org": "M247 Europe (VPN exit)",
+    "asn_type": "HOSTING",
+    "known_vpn": true
+  }
+}

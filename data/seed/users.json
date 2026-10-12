@@ -1,0 +1,504 @@
+[
+  {
+    "user_id": "usr_9921",
+    "name": "Alex Rivera",
+    "phone": "+14155550123",
+    "home": {
+      "city": "San Francisco",
+      "country": "US",
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "utc_offset_hours": -7,
+    "devices": [
+      "dev-alex-iphone15",
+      "dev-alex-macbook"
+    ],
+    "ips": [
+      "198.18.10.21",
+      "198.18.10.22"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": [
+      "demo",
+      "deadlock"
+    ]
+  },
+  {
+    "user_id": "usr_2002",
+    "name": "Sam Okafor",
+    "phone": "+14155550188",
+    "home": {
+      "city": "San Francisco",
+      "country": "US",
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "utc_offset_hours": -7,
+    "devices": [
+      "dev-sam-pixel8"
+    ],
+    "ips": [
+      "198.18.20.40"
+    ],
+    "sim_swap_hours_ago": 20,
+    "tags": [
+      "demo",
+      "sim_swap"
+    ]
+  },
+  {
+    "user_id": "usr_3003",
+    "name": "Jordan Lee",
+    "phone": "+13125550147",
+    "home": {
+      "city": "Chicago",
+      "country": "US",
+      "lat": 41.8781,
+      "lng": -87.6298
+    },
+    "utc_offset_hours": -5,
+    "devices": [
+      "dev-jordan-galaxy"
+    ],
+    "ips": [
+      "198.18.30.77"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": [
+      "demo",
+      "clear_fraud"
+    ]
+  },
+  {
+    "user_id": "usr_4000",
+    "name": "Tomás Shah",
+    "phone": "+14155551000",
+    "home": {
+      "city": "Lisbon",
+      "country": "PT",
+      "lat": 38.7223,
+      "lng": -9.1393
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-bd9cad3c2d6d"
+    ],
+    "ips": [
+      "198.18.44.152",
+      "198.18.216.9",
+      "198.18.15.24"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4001",
+    "name": "Leila Shah",
+    "phone": "+14155551001",
+    "home": {
+      "city": "Seattle",
+      "country": "US",
+      "lat": 47.6062,
+      "lng": -122.3321
+    },
+    "utc_offset_hours": -7,
+    "devices": [
+      "dev-72ff386ecbe0",
+      "dev-473796da1dac"
+    ],
+    "ips": [
+      "198.18.81.179"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4002",
+    "name": "Fatima Silva",
+    "phone": "+14155551002",
+    "home": {
+      "city": "Chicago",
+      "country": "US",
+      "lat": 41.8781,
+      "lng": -87.6298
+    },
+    "utc_offset_hours": -5,
+    "devices": [
+      "dev-d8f55be6128e"
+    ],
+    "ips": [
+      "198.18.135.207",
+      "198.18.22.187"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4003",
+    "name": "Sofia García",
+    "phone": "+14155551003",
+    "home": {
+      "city": "San Francisco",
+      "country": "US",
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "utc_offset_hours": -7,
+    "devices": [
+      "dev-313993cd59bf",
+      "dev-11ceb45ed1f0"
+    ],
+    "ips": [
+      "198.18.116.198"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4004",
+    "name": "Lucas García",
+    "phone": "+14155551004",
+    "home": {
+      "city": "San Francisco",
+      "country": "US",
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "utc_offset_hours": -7,
+    "devices": [
+      "dev-5af35ec42e08"
+    ],
+    "ips": [
+      "198.18.136.180"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4005",
+    "name": "Mei Ali",
+    "phone": "+14155551005",
+    "home": {
+      "city": "Lisbon",
+      "country": "PT",
+      "lat": 38.7223,
+      "lng": -9.1393
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-451b6123fdf7",
+      "dev-ece6fd5166e6"
+    ],
+    "ips": [
+      "198.18.112.176",
+      "198.18.166.216",
+      "198.18.28.59"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4006",
+    "name": "Elena Mensah",
+    "phone": "+14155551006",
+    "home": {
+      "city": "London",
+      "country": "GB",
+      "lat": 51.5072,
+      "lng": -0.1276
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-366e508ebad7",
+      "dev-7fcda7cad415",
+      "dev-e27a654821d0"
+    ],
+    "ips": [
+      "198.18.234.37",
+      "198.18.135.36",
+      "198.18.126.191"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4007",
+    "name": "Ben Mensah",
+    "phone": "+14155551007",
+    "home": {
+      "city": "Chicago",
+      "country": "US",
+      "lat": 41.8781,
+      "lng": -87.6298
+    },
+    "utc_offset_hours": -5,
+    "devices": [
+      "dev-7e57827050a8"
+    ],
+    "ips": [
+      "198.18.24.221"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4008",
+    "name": "Noah Mensah",
+    "phone": "+14155551008",
+    "home": {
+      "city": "Lisbon",
+      "country": "PT",
+      "lat": 38.7223,
+      "lng": -9.1393
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-405c877409a9",
+      "dev-8da0f89897b9"
+    ],
+    "ips": [
+      "198.18.58.175"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4009",
+    "name": "Hana Kim",
+    "phone": "+14155551009",
+    "home": {
+      "city": "London",
+      "country": "GB",
+      "lat": 51.5072,
+      "lng": -0.1276
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-b83ce037e5ed",
+      "dev-f8cd436d76e2",
+      "dev-c30f8026695f"
+    ],
+    "ips": [
+      "198.18.54.223"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4010",
+    "name": "Yuki Ali",
+    "phone": "+14155551010",
+    "home": {
+      "city": "London",
+      "country": "GB",
+      "lat": 51.5072,
+      "lng": -0.1276
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-0025eb2263dd",
+      "dev-52fb99546eb4",
+      "dev-04fc7d154385"
+    ],
+    "ips": [
+      "198.18.185.225"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4011",
+    "name": "Omar Silva",
+    "phone": "+14155551011",
+    "home": {
+      "city": "London",
+      "country": "GB",
+      "lat": 51.5072,
+      "lng": -0.1276
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-7c69bb5e4bcf"
+    ],
+    "ips": [
+      "198.18.64.33"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4012",
+    "name": "Noah Haddad",
+    "phone": "+14155551012",
+    "home": {
+      "city": "Seattle",
+      "country": "US",
+      "lat": 47.6062,
+      "lng": -122.3321
+    },
+    "utc_offset_hours": -7,
+    "devices": [
+      "dev-badcc1590f53",
+      "dev-337eb09b2a5c",
+      "dev-4fccb683d2e6"
+    ],
+    "ips": [
+      "198.18.191.113",
+      "198.18.231.31"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4013",
+    "name": "Elena Shah",
+    "phone": "+14155551013",
+    "home": {
+      "city": "San Francisco",
+      "country": "US",
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "utc_offset_hours": -7,
+    "devices": [
+      "dev-a18fb535106e"
+    ],
+    "ips": [
+      "198.18.117.18"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4014",
+    "name": "Elena García",
+    "phone": "+14155551014",
+    "home": {
+      "city": "London",
+      "country": "GB",
+      "lat": 51.5072,
+      "lng": -0.1276
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-b92d21df306f",
+      "dev-e1e3ef7ddc76",
+      "dev-9382922fe15a"
+    ],
+    "ips": [
+      "198.18.124.201",
+      "198.18.242.207"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4015",
+    "name": "Tomás Mensah",
+    "phone": "+14155551015",
+    "home": {
+      "city": "San Francisco",
+      "country": "US",
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "utc_offset_hours": -7,
+    "devices": [
+      "dev-a748ac619e63"
+    ],
+    "ips": [
+      "198.18.50.16",
+      "198.18.206.187",
+      "198.18.173.205"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4016",
+    "name": "Aisha Silva",
+    "phone": "+14155551016",
+    "home": {
+      "city": "New York",
+      "country": "US",
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "utc_offset_hours": -4,
+    "devices": [
+      "dev-dfde3ff350bf",
+      "dev-134cec5b227c"
+    ],
+    "ips": [
+      "198.18.50.13",
+      "198.18.7.249"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4017",
+    "name": "Lucas Chen",
+    "phone": "+14155551017",
+    "home": {
+      "city": "London",
+      "country": "GB",
+      "lat": 51.5072,
+      "lng": -0.1276
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-61042a25a888"
+    ],
+    "ips": [
+      "198.18.199.68"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4018",
+    "name": "Ines Haddad",
+    "phone": "+14155551018",
+    "home": {
+      "city": "London",
+      "country": "GB",
+      "lat": 51.5072,
+      "lng": -0.1276
+    },
+    "utc_offset_hours": 1,
+    "devices": [
+      "dev-b7e9a97065e1",
+      "dev-27a07c967f79",
+      "dev-4bf5309d258c"
+    ],
+    "ips": [
+      "198.18.29.149"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  },
+  {
+    "user_id": "usr_4019",
+    "name": "Elena Shah",
+    "phone": "+14155551019",
+    "home": {
+      "city": "San Francisco",
+      "country": "US",
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "utc_offset_hours": -7,
+    "devices": [
+      "dev-0e8f284d82e5",
+      "dev-8201f5f59b22",
+      "dev-d9f114822f53"
+    ],
+    "ips": [
+      "198.18.35.153"
+    ],
+    "sim_swap_hours_ago": null,
+    "tags": []
+  }
+]

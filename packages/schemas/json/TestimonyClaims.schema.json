@@ -1,0 +1,53 @@
+{
+  "description": "Structured output of the tool-less extractor. Never contains instructions.",
+  "properties": {
+    "confirms_transaction": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "true if the witness says they made it, false if not, null if unclear",
+      "title": "Confirms Transaction"
+    },
+    "stated_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Why, in the witness's words",
+      "title": "Stated Reason"
+    },
+    "mentions_travel": {
+      "default": false,
+      "title": "Mentions Travel",
+      "type": "boolean"
+    },
+    "sentiment": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "calm, anxious, angry, ...",
+      "title": "Sentiment"
+    }
+  },
+  "required": [
+    "confirms_transaction"
+  ],
+  "title": "TestimonyClaims",
+  "type": "object"
+}

@@ -1,0 +1,56 @@
+[project]
+name = "subpoena-ai"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/schemas", "packages/store", "apps/api", "apps/mcp-server", "apps/agents"]
+
+[tool.uv.sources]
+subpoena-schemas = { workspace = true }
+subpoena-store = { workspace = true }
+subpoena-api = { workspace = true }
+subpoena-mcp = { workspace = true }
+subpoena-agents = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "subpoena-schemas",
+    "subpoena-store",
+    "subpoena-api",
+    "subpoena-mcp",
+    "subpoena-agents",
+    "pytest>=8.3",
+    "httpx>=0.27",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "google-cloud-bigquery>=3.25",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]  # ruff format owns line length; long string literals are fine
+
+[tool.ruff.lint.isort]
+known-first-party = ["subpoena_schemas", "subpoena_store", "subpoena_api", "subpoena_mcp", "subpoena_agents", "conftest", "apitest", "courtkit"]
+
+[tool.pytest.ini_options]
+testpaths = ["packages/schemas/tests", "packages/store/tests", "apps/api/tests", "apps/mcp-server/tests", "apps/agents/tests"]
+addopts = "-q"
+filterwarnings = ["ignore::pytest.PytestCollectionWarning"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["google.cloud.*", "google.api_core.*", "google.protobuf.*"]
+ignore_missing_imports = true

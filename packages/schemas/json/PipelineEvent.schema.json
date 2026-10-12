@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "Agent": {
+      "enum": [
+        "system",
+        "clerk",
+        "geo",
+        "device",
+        "velocity",
+        "merchant",
+        "graph",
+        "prosecutor",
+        "defense",
+        "judge",
+        "bailiff",
+        "stenographer",
+        "witness",
+        "analyst"
+      ],
+      "title": "Agent",
+      "type": "string"
+    },
+    "EventType": {
+      "enum": [
+        "CASE_OPENED",
+        "TOOL_CALL",
+        "FINDING",
+        "ARGUMENT",
+        "REBUTTAL",
+        "CLAIM_STRUCK",
+        "RULING",
+        "SUBPOENA_SENT",
+        "WITNESS_AUTH",
+        "TESTIMONY",
+        "VERDICT",
+        "OVERRIDE",
+        "ERROR"
+      ],
+      "title": "EventType",
+      "type": "string"
+    },
+    "TokenUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "minimum": 0,
+          "title": "Input",
+          "type": "integer"
+        },
+        "output": {
+          "minimum": 0,
+          "title": "Output",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "title": "TokenUsage",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "title": "Event Id",
+      "type": "string"
+    },
+    "evaluation_id": {
+      "title": "Evaluation Id",
+      "type": "string"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "round": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Round"
+    },
+    "from_agent": {
+      "$ref": "#/$defs/Agent"
+    },
+    "to_agent": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Agent"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "type": {
+      "$ref": "#/$defs/EventType"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "model": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model"
+    },
+    "tokens": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TokenUsage"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "latency_ms": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Latency Ms"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "evaluation_id",
+    "sequence",
+    "from_agent",
+    "type"
+  ],
+  "title": "PipelineEvent",
+  "type": "object"
+}

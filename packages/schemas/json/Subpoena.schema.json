@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "Channel": {
+      "enum": [
+        "WHATSAPP",
+        "SMS",
+        "VOICE",
+        "PUSH"
+      ],
+      "title": "Channel",
+      "type": "string"
+    },
+    "DeliveryStatus": {
+      "enum": [
+        "QUEUED",
+        "SENT",
+        "DELIVERED",
+        "READ",
+        "FAILED",
+        "UNDELIVERED"
+      ],
+      "title": "DeliveryStatus",
+      "type": "string"
+    },
+    "SubpoenaState": {
+      "description": "Lifecycle of one subpoena, driven by the Bailiff and inbound messages.",
+      "enum": [
+        "AUTH_FAILED",
+        "AWAITING_REPLY",
+        "ADMITTED",
+        "CODE_FAILED",
+        "EXPIRED"
+      ],
+      "title": "SubpoenaState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "channel": {
+      "$ref": "#/$defs/Channel"
+    },
+    "sent_at": {
+      "format": "date-time",
+      "title": "Sent At",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "workspace_id": {
+      "title": "Workspace Id",
+      "type": "string"
+    },
+    "evaluation_id": {
+      "title": "Evaluation Id",
+      "type": "string"
+    },
+    "user_id": {
+      "title": "User Id",
+      "type": "string"
+    },
+    "phone": {
+      "title": "Phone",
+      "type": "string"
+    },
+    "question": {
+      "title": "Question",
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/SubpoenaState",
+      "default": "AWAITING_REPLY"
+    },
+    "twilio_sid": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Twilio Sid"
+    },
+    "delivery_status": {
+      "$ref": "#/$defs/DeliveryStatus",
+      "default": "QUEUED"
+    },
+    "lookup": {
+      "additionalProperties": true,
+      "description": "Lookup result",
+      "title": "Lookup",
+      "type": "object"
+    },
+    "reply_text": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reply Text"
+    },
+    "pending_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Code awaiting a Bailiff check",
+      "title": "Pending Code"
+    },
+    "code_verified": {
+      "default": false,
+      "title": "Code Verified",
+      "type": "boolean"
+    },
+    "code_attempts": {
+      "default": 0,
+      "title": "Code Attempts",
+      "type": "integer"
+    },
+    "responded_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Responded At"
+    }
+  },
+  "required": [
+    "channel",
+    "sent_at",
+    "expires_at",
+    "workspace_id",
+    "evaluation_id",
+    "user_id",
+    "phone",
+    "question"
+  ],
+  "title": "Subpoena",
+  "type": "object"
+}

@@ -1,0 +1,188 @@
+{
+  "$defs": {
+    "Channel": {
+      "enum": [
+        "WHATSAPP",
+        "SMS",
+        "VOICE",
+        "PUSH"
+      ],
+      "title": "Channel",
+      "type": "string"
+    },
+    "HardRules": {
+      "additionalProperties": false,
+      "properties": {
+        "sanctioned_countries": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sanctioned Countries",
+          "type": "array"
+        },
+        "known_bad_devices": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Known Bad Devices",
+          "type": "array"
+        },
+        "known_bad_ips": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Known Bad Ips",
+          "type": "array"
+        },
+        "amount_ceiling": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "50000.00",
+          "title": "Amount Ceiling"
+        }
+      },
+      "title": "HardRules",
+      "type": "object"
+    },
+    "SubpoenaRules": {
+      "additionalProperties": false,
+      "properties": {
+        "min_amount": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": "50.00",
+          "title": "Min Amount"
+        },
+        "channels": {
+          "items": {
+            "$ref": "#/$defs/Channel"
+          },
+          "title": "Channels",
+          "type": "array"
+        },
+        "timeout_seconds": {
+          "default": 900,
+          "exclusiveMinimum": 0,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "timeout_action": {
+          "$ref": "#/$defs/Verdict",
+          "default": "HOLD"
+        }
+      },
+      "title": "SubpoenaRules",
+      "type": "object"
+    },
+    "Thresholds": {
+      "additionalProperties": false,
+      "properties": {
+        "approve_max": {
+          "default": 0.15,
+          "description": "p_fraud <= this -> APPROVE",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Approve Max",
+          "type": "number"
+        },
+        "block_min": {
+          "default": 0.85,
+          "description": "p_fraud >= this -> BLOCK",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Block Min",
+          "type": "number"
+        }
+      },
+      "title": "Thresholds",
+      "type": "object"
+    },
+    "Tier0Thresholds": {
+      "additionalProperties": false,
+      "properties": {
+        "approve_max": {
+          "default": 0.3,
+          "description": "score <= this exits APPROVE",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Approve Max",
+          "type": "number"
+        },
+        "block_min": {
+          "default": 0.97,
+          "description": "score >= this exits BLOCK",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Block Min",
+          "type": "number"
+        }
+      },
+      "title": "Tier0Thresholds",
+      "type": "object"
+    },
+    "Verdict": {
+      "enum": [
+        "APPROVE",
+        "BLOCK",
+        "HOLD"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "workspace_id": {
+      "title": "Workspace Id",
+      "type": "string"
+    },
+    "version": {
+      "default": 1,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "active": {
+      "default": true,
+      "title": "Active",
+      "type": "boolean"
+    },
+    "thresholds": {
+      "$ref": "#/$defs/Thresholds"
+    },
+    "tier0": {
+      "$ref": "#/$defs/Tier0Thresholds"
+    },
+    "subpoena": {
+      "$ref": "#/$defs/SubpoenaRules"
+    },
+    "hard_rules": {
+      "$ref": "#/$defs/HardRules"
+    }
+  },
+  "required": [
+    "workspace_id"
+  ],
+  "title": "Policy",
+  "type": "object"
+}

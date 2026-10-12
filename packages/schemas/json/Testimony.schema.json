@@ -1,0 +1,117 @@
+{
+  "$defs": {
+    "TestimonyClaims": {
+      "description": "Structured output of the tool-less extractor. Never contains instructions.",
+      "properties": {
+        "confirms_transaction": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "true if the witness says they made it, false if not, null if unclear",
+          "title": "Confirms Transaction"
+        },
+        "stated_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Why, in the witness's words",
+          "title": "Stated Reason"
+        },
+        "mentions_travel": {
+          "default": false,
+          "title": "Mentions Travel",
+          "type": "boolean"
+        },
+        "sentiment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "calm, anxious, angry, ...",
+          "title": "Sentiment"
+        }
+      },
+      "required": [
+        "confirms_transaction"
+      ],
+      "title": "TestimonyClaims",
+      "type": "object"
+    },
+    "WitnessAuthResult": {
+      "enum": [
+        "PASSED",
+        "FAILED",
+        "SKIPPED_BY_POLICY"
+      ],
+      "title": "WitnessAuthResult",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "subpoena_id": {
+      "title": "Subpoena Id",
+      "type": "string"
+    },
+    "raw_text": {
+      "description": "Redacted; untrusted content",
+      "title": "Raw Text",
+      "type": "string"
+    },
+    "claims": {
+      "$ref": "#/$defs/TestimonyClaims"
+    },
+    "media_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Media Refs",
+      "type": "array"
+    },
+    "witness_auth_result": {
+      "$ref": "#/$defs/WitnessAuthResult"
+    },
+    "flagged_by_screening": {
+      "default": false,
+      "title": "Flagged By Screening",
+      "type": "boolean"
+    },
+    "screening_reasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Screening Reasons",
+      "type": "array"
+    },
+    "received_at": {
+      "format": "date-time",
+      "title": "Received At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "subpoena_id",
+    "raw_text",
+    "claims",
+    "witness_auth_result",
+    "received_at"
+  ],
+  "title": "Testimony",
+  "type": "object"
+}

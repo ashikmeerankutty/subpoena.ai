@@ -1,0 +1,46 @@
+[
+  {
+    "id": "P1",
+    "summary": "Late-night $3,900 CNP auto-parts order from a new laptop by a user with a history of auto-parts purchases; cardholder confirmed via OTP.",
+    "verdict": "APPROVE",
+    "label": "LEGIT",
+    "tags": [
+      "auto_parts",
+      "new_device",
+      "night"
+    ]
+  },
+  {
+    "id": "P2",
+    "summary": "$7,500 P2P transfer to a payee created days earlier, from a hosting-ASN IP linked to two known mule accounts.",
+    "verdict": "BLOCK",
+    "label": "FRAUD",
+    "tags": [
+      "p2p",
+      "mule",
+      "vpn",
+      "new_payee"
+    ]
+  },
+  {
+    "id": "P3",
+    "summary": "High-value CNP purchase shortly after a SIM swap on the cardholder's number; OTP was answered by the attacker.",
+    "verdict": "BLOCK",
+    "label": "FRAUD",
+    "tags": [
+      "sim_swap",
+      "ato",
+      "new_device"
+    ]
+  },
+  {
+    "id": "P4",
+    "summary": "Electronics purchase 8x the user's average while travelling; IP matched the user's hotel city and cardholder confirmed.",
+    "verdict": "APPROVE",
+    "label": "LEGIT",
+    "tags": [
+      "amount_spike",
+      "travel"
+    ]
+  }
+]
