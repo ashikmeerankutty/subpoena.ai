@@ -233,13 +233,10 @@ async def _ask_for_code(services: Services, script: str) -> Response:
     return _twiml(
         _say(services, script),
         '<Pause length="1"/>',
-        _gather(
+        _code_gather(
             services,
             "code",
             "We have just texted you a 6-digit code. Please enter it on your keypad now.",
-            input="dtmf",
-            numDigits="6",
-            timeout="20",
         ),
         _say(
             services,
@@ -273,21 +270,52 @@ async def voice_inbound(request: Request, services: ServicesDep) -> Response:
     return await _ask_for_code(services, f"{GENERIC_SCRIPT} {sub.question}")
 
 
+def _code_gather(services: Services, step: str, prompt: str) -> str:
+    return _gather(services, step, prompt, input="dtmf", numDigits="6", timeout="15")
+
+
 @router.post("/v1/webhooks/twilio/voice/code", include_in_schema=False)
 async def voice_code(request: Request, services: ServicesDep) -> Response:
+    return await _take_code(request, services, last_try=False)
+
+
+@router.post("/v1/webhooks/twilio/voice/code-retry", include_in_schema=False)
+async def voice_code_retry(request: Request, services: ServicesDep) -> Response:
+    return await _take_code(request, services, last_try=True)
+
+
+async def _take_code(request: Request, services: Services, *, last_try: bool) -> Response:
     params = await _verified_form(request, services)
     digits = re.sub(r"\D", "", params.get("Digits", ""))
-    if digits:
-        await record_inbound(
-            services, _witness(params), digits, Channel.VOICE, params.get("CallSid")
+    if len(digits) != 6:
+        # Partial keypad input is never testimony; ask once more, then fall back to text.
+        if last_try:
+            return _twiml(
+                _say(
+                    services,
+                    "We still did not get the full code. Please reply to our text message with "
+                    "the code and your answer. Goodbye.",
+                )
+            )
+        return _twiml(
+            _code_gather(
+                services,
+                "code-retry",
+                "Sorry, we need all 6 digits. Please enter the code from our text message.",
+            ),
+            _say(services, "Please reply to our text message instead. Goodbye."),
         )
+    await record_inbound(services, _witness(params), digits, Channel.VOICE, params.get("CallSid"))
     return _twiml(
         _gather(
             services,
             "answer",
-            "Thank you. Now please tell us, in a few words, whether you made this payment.",
+            "Thank you. Now please tell us, in a sentence, whether you made this payment and what "
+            "it was for.",
             input="speech",
-            speechTimeout="auto",
+            speechModel="phone_call",
+            enhanced="true",
+            speechTimeout="2",
             timeout="8",
             language=services.settings.twilio_voice_language,
         ),

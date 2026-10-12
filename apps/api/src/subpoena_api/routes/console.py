@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import statistics
 from collections import Counter
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
@@ -82,10 +82,13 @@ async def overview(
     ]
     costs = [e.cost_usd for e in court if e.cost_usd is not None]
     signals = Counter(f.type for e in court for f in e.findings if f.supports == "FRAUD")
+    # ~12-48 bars whatever the window: 5-minute buckets for an hour, hourly for a day, 6h for a week.
+    bucket_minutes = 5 if hours <= 2 else 60 if hours <= 48 else 360
     buckets: dict[str, Counter[str]] = {}
     for e in evs:
-        hour = e.created_at.replace(minute=0, second=0, microsecond=0).isoformat()
-        buckets.setdefault(hour, Counter())[e.verdict.value if e.verdict else "PENDING"] += 1
+        ts = e.created_at.timestamp()
+        start = datetime.fromtimestamp(ts - ts % (bucket_minutes * 60), tz=UTC).isoformat()
+        buckets.setdefault(start, Counter())[e.verdict.value if e.verdict else "PENDING"] += 1
     avoided = sum(1 for e in answered if e.verdict is Verdict.APPROVE)
 
     def rate(k: int) -> float:
@@ -118,6 +121,7 @@ async def overview(
         "cost_per_courtroom_case_usd": round(statistics.mean(costs), 4) if costs else None,
         "total_cost_usd": round(sum(costs), 4),
         "top_risk_signals": signals.most_common(8),
+        "bucket_minutes": bucket_minutes,
         "series": [{"hour": h, **dict(c)} for h, c in sorted(buckets.items())],
     }
 

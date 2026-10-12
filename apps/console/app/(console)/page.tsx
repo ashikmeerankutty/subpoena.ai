@@ -28,6 +28,7 @@ interface Overview {
   total_cost_usd: number;
   top_risk_signals: [string, number][];
   series: Record<string, any>[];
+  bucket_minutes?: number;
 }
 
 export default function OverviewPage() {
@@ -62,7 +63,7 @@ export default function OverviewPage() {
       </KpiGrid>
       <Box display="grid" columnGap="space60" marginTop="space70" style={{ gridTemplateColumns: "2fr 1fr" }}>
         <Panel title="Evaluations by verdict">
-          <TrendChart series={data?.series ?? []} />
+          <TrendChart series={data?.series ?? []} hours={hours} bucketMinutes={data?.bucket_minutes} />
         </Panel>
         <Panel title="Top risk signals">
           {top.length === 0 ? <Text as="p" color="colorTextWeak">No courtroom findings yet.</Text> : null}

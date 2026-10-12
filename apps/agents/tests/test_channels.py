@@ -158,3 +158,18 @@ def test_unanswered_call_falls_back_and_late_status_is_ignored(monkeypatch) -> N
         # A stale status for the old call must not trigger another resend.
         twilio(c, "/v1/webhooks/twilio/voice/status", call | {"CallStatus": "failed"})
         assert subpoena(c, ev)["channels_tried"] == ["VOICE", "WHATSAPP"]
+
+
+def test_partial_keypad_code_is_asked_again_and_never_becomes_testimony(monkeypatch) -> None:
+    with client(monkeypatch) as c:
+        channels(c, "VOICE")
+        ev = evaluate(c, "voice-3", ["VOICE"])
+        sub = subpoena(c, ev)
+        call = {"CallSid": sub["twilio_sid"], "To": PHONE, "Direction": "outbound-api"}
+        first = twilio(c, "/v1/webhooks/twilio/voice/code", call | {"Digits": "53"})
+        assert "/voice/code-retry" in first.text and 'input="dtmf"' in first.text
+        last = twilio(c, "/v1/webhooks/twilio/voice/code-retry", call | {"Digits": ""})
+        assert "<Gather" not in last.text and "reply to our text" in last.text
+        sub = subpoena(c, ev)
+        assert sub["reply_text"] is None and sub["code_attempts"] == 0
+        assert not [m for m in sub["messages"] if m["direction"] == "INBOUND"]
