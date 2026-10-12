@@ -25,6 +25,22 @@ const totals = (amounts: Record<string, string> | undefined) => {
   const parts = Object.entries(amounts ?? {}).map(([c, v]) => money(v, c));
   return parts.length ? parts.join(" + ") : money(0);
 };
+interface Economics {
+  tiers: { tier0_approve: number; tier0_block: number; courtroom: number };
+  decided_without_model_rate: number | null;
+  ai_spend_usd: number;
+  cost_per_evaluation_usd: number | null;
+  usd_protected: string;
+  usd_protected_per_ai_dollar: number | null;
+}
+
+/** How each evaluation was decided; only the courtroom calls the model. */
+const TIERS = [
+  { key: "tier0_approve", label: "Tier 0 approve", color: "#0b7a39" },
+  { key: "tier0_block", label: "Tier 0 block (incl. hard rules)", color: "#c72323" },
+  { key: "courtroom", label: "Courtroom (Gemini)", color: "#6d2ed1" },
+] as const;
+
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 interface Overview {
@@ -45,6 +61,7 @@ interface Overview {
   series: Record<string, any>[];
   bucket_minutes?: number;
   impact?: Impact;
+  economics?: Economics;
 }
 
 export default function OverviewPage() {
@@ -54,6 +71,8 @@ export default function OverviewPage() {
   const max = Math.max(1, ...top.map(([, n]) => n));
   const impact = data?.impact;
   const guard = impact?.witness_protection;
+  const econ = data?.economics;
+  const tierTotal = econ ? Object.values(econ.tiers).reduce((a, b) => a + b, 0) : 0;
   return (
     <>
       <PageHeader title="Overview" description="Decisions, subpoenas and cost across the workspace."
@@ -84,6 +103,38 @@ export default function OverviewPage() {
             value={(guard?.sim_swap_blocked ?? 0) + (guard?.code_failed ?? 0) + (guard?.testimony_flagged ?? 0)}
             hint={`${guard?.sim_swap_blocked ?? 0} SIM swap · ${guard?.code_failed ?? 0} failed code · ${guard?.testimony_flagged ?? 0} flagged reply`} />
         </KpiGrid>
+      </Panel>
+      <Panel title="AI cost and value">
+        <Text as="p" color="colorTextWeak" marginBottom="space50">
+          Rules decide the clear cases for free. Gemini is only called for the uncertain ones.
+        </Text>
+        <KpiGrid>
+          <Kpi label="Protected per $1 of AI" tone="#0b7a39"
+            value={econ?.usd_protected_per_ai_dollar != null ? money(econ.usd_protected_per_ai_dollar) : "—"}
+            hint={`${money(econ?.usd_protected ?? 0)} protected for ${usd(econ?.ai_spend_usd)} of model spend (USD only)`} />
+          <Kpi label="Decided without a model" value={pct(econ?.decided_without_model_rate)}
+            hint="Tier 0 rules and baselines, at no model cost" />
+          <Kpi label="AI cost per evaluation" value={usd(econ?.cost_per_evaluation_usd)}
+            hint={`${usd(data?.cost_per_courtroom_case_usd)} per courtroom case`} />
+        </KpiGrid>
+        {econ && tierTotal ? (
+          <Box marginTop="space60">
+            <Box display="flex" height="12px" borderRadius="borderRadius20" overflow="hidden" role="img"
+              aria-label={`How evaluations were decided: ${TIERS.map((t) => `${t.label} ${econ.tiers[t.key]}`).join(", ")}`}>
+              {TIERS.map((t) => (
+                <Box key={t.key} style={{ width: `${(econ.tiers[t.key] / tierTotal) * 100}%`, backgroundColor: t.color }} />
+              ))}
+            </Box>
+            <Box display="flex" flexWrap="wrap" columnGap="space60" rowGap="space20" marginTop="space30" aria-hidden="true">
+              {TIERS.map((t) => (
+                <Text key={t.key} as="span" fontSize="fontSize20" color="colorTextWeak">
+                  <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, marginRight: 6, backgroundColor: t.color }} />
+                  {t.label} · {econ.tiers[t.key]}
+                </Text>
+              ))}
+            </Box>
+          </Box>
+        ) : null}
       </Panel>
       <Text as="h2" fontSize="fontSize40" fontWeight="fontWeightSemibold" marginBottom="space50">Operations</Text>
       <KpiGrid>

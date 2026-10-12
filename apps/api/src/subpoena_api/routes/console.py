@@ -131,6 +131,7 @@ async def overview(
         "total_cost_usd": round(sum(costs), 4),
         "top_risk_signals": signals.most_common(8),
         "impact": _impact(evs, subs),
+        "economics": _economics(evs, costs),
         "bucket_minutes": bucket_minutes,
         "series": [{"hour": h, **dict(c)} for h, c in sorted(buckets.items())],
     }
@@ -175,6 +176,43 @@ def _impact(evs: list[Evaluation], subs: list[Subpoena]) -> dict[str, Any]:
             "code_failed": states[SubpoenaState.CODE_FAILED],
             "testimony_flagged": flagged,
         },
+    }
+
+
+def _economics(evs: list[Evaluation], costs: list[float]) -> dict[str, Any]:
+    """Where model spend goes: Tier 0 (hard rules included) decides for free; only the courtroom calls Gemini."""
+    routes = Counter(e.tier0.route for e in evs if e.tier0)
+    spend = sum(costs)
+    # Only USD amounts count toward the ratio; other currencies are never converted.
+    protected = sum(
+        (
+            e.transaction.amount
+            for e in evs
+            if e.transaction.currency == "USD"
+            and (
+                e.verdict is Verdict.BLOCK
+                or (
+                    e.verdict is Verdict.APPROVE
+                    and e.testimony
+                    and e.testimony.claims.confirms_transaction
+                )
+            )
+        ),
+        Decimal(0),
+    )
+    return {
+        "tiers": {
+            "tier0_approve": routes[Tier0Route.EXIT_APPROVE],
+            "tier0_block": routes[Tier0Route.EXIT_BLOCK],
+            "courtroom": routes[Tier0Route.COURT],
+        },
+        "decided_without_model_rate": round(1 - routes[Tier0Route.COURT] / len(evs), 4)
+        if evs
+        else None,
+        "ai_spend_usd": round(spend, 4),
+        "cost_per_evaluation_usd": round(spend / len(evs), 5) if evs else None,
+        "usd_protected": f"{protected:.2f}",
+        "usd_protected_per_ai_dollar": round(float(protected) / spend) if spend else None,
     }
 
 

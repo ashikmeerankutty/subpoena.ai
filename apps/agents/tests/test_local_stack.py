@@ -122,13 +122,19 @@ def test_overview_reports_customer_impact(monkeypatch) -> None:
         )
         wait_for(c, ev["evaluation_id"], "RULED")
 
-        impact = c.get("/v1/stats/overview", headers=H).json()["impact"]
+        overview = c.get("/v1/stats/overview", headers=H).json()
+        impact = overview["impact"]
         assert impact["legit_spend_saved"] == {"count": 1, "amounts": {"USD": "4500.00"}}
         assert impact["fraud_stopped"]["count"] == 2
         assert impact["fraud_stopped"]["amounts"] == {"USD": "14300.00"}
         assert impact["customers_not_contacted_rate"] == 0.5
         assert impact["witness_protection"]["sim_swap_blocked"] == 1
         assert impact["median_resolution_s"] is not None
+
+        econ = overview["economics"]
+        assert sum(econ["tiers"].values()) == 4  # every evaluation passes Tier 0
+        assert econ["tiers"]["courtroom"] == overview["sent_to_court"]
+        assert econ["usd_protected"] == "18800.00"
 
 
 def test_sync_response_when_courtroom_rules_fast(monkeypatch) -> None:
