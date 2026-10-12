@@ -5,7 +5,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Courthouse Console · Subpoena.ai",
+  title: "Subpoena.ai Console",
   description: "Multi-agent fraud courtroom: cases, pipeline transcripts and subpoenas.",
 };
 

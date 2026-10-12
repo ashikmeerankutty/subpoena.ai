@@ -1,0 +1,17 @@
+# Rendered by the nginx image's envsubst at start-up: PORT comes from Cloud Run, CONSOLE_URL from
+# deploy.sh. Only defined variables are substituted, so nginx's own $uri stays as is.
+server {
+  listen ${PORT};
+  root /usr/share/nginx/html;
+  gzip on;
+  gzip_types text/css image/svg+xml;
+
+  # Every "Open Console" link points at this deployment's Console.
+  sub_filter '__CONSOLE_URL__' '${CONSOLE_URL}';
+  sub_filter_once off;
+
+  add_header X-Content-Type-Options nosniff always;
+  add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+  location / { try_files $uri $uri/ /index.html; }
+}

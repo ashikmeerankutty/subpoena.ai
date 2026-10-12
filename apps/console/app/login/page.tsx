@@ -49,6 +49,7 @@ function LoginForm() {
   const [google, setGoogle] = useState<boolean | null>(null);
 
   useEffect(() => {
+    document.title = "Sign in · Subpoena.ai Console";
     fetch("/api/auth/config").then((r) => r.json()).then((c: { google: boolean }) => setGoogle(c.google)).catch(() => setGoogle(false));
     const slug = params.get("error");
     if (slug) setError(ERRORS[slug] ?? params.get("detail") ?? "Sign-in failed. Please try again.");
@@ -89,7 +90,6 @@ function LoginForm() {
             ))}
           </ol>
         </div>
-        <small>Every override and setting change is written to the audit log.</small>
       </aside>
 
       <main className="login-main">

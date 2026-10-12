@@ -76,6 +76,12 @@ export function Shell({ children }: { children: ReactNode }) {
   }
 
   const selected = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  // The browser tab names the page, e.g. "Cases · Subpoena.ai Console".
+  useEffect(() => {
+    const page = [...NAV].reverse().find((n) => selected(n.href))?.label;
+    const caseId = path.match(/^\/cases\/([^/]+)/)?.[1];
+    document.title = `${caseId ? `Case ${caseId}` : page ?? "Console"} · Subpoena.ai Console`;
+  }, [path]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <MeContext.Provider value={me}>

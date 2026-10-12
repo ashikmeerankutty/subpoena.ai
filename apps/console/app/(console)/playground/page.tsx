@@ -238,12 +238,15 @@ export default function PlaygroundPage() {
 
             <Box>
               <Label htmlFor="path">URL</Label>
-              <Box display="flex" alignItems="center" columnGap="space30">
-                <span className="pg-method" style={{ background: METHOD_COLOR[endpoint.method] }}>{endpoint.method}</span>
-                <Box flexGrow={1}>
-                  <Input id="path" type="text" value={path} onChange={(e) => setPath(e.target.value)} insertBefore={<Text as="span" color="colorTextWeak" fontFamily="fontFamilyCode" fontSize="fontSize20">/v1/</Text>} />
-                </Box>
-              </Box>
+              <div className="pg-url">
+                <span className="pg-url-method" style={{ color: METHOD_COLOR[endpoint.method] }}>{endpoint.method}</span>
+                <span className="pg-url-base">/v1/</span>
+                <input id="path" type="text" value={path} spellCheck={false} autoComplete="off"
+                  onChange={(e) => setPath(e.target.value.replace(/^\/?(v1\/)?/, ""))} />
+              </div>
+              {names.length && !missing.length ? (
+                <HelpText><span className="pg-resolved">→ /v1/{resolved}</span></HelpText>
+              ) : null}
             </Box>
 
             {names.length ? (

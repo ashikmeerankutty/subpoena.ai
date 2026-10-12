@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Subpoena.ai · Fraud decisions that ask the witness</title>
+  <meta name="description" content="A multi-agent fraud courtroom: AI agents debate unclear payments from evidence, and when they can't agree, ask the cardholder over WhatsApp, SMS or a phone call." />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" aria-label="Subpoena.ai home">
+        <img src="/favicon.svg" alt="" width="30" height="30" />
+        <span>Subpoena<em>.ai</em></span>
+      </a>
+      <nav class="nav-links" aria-label="Sections">
+        <a href="#how">How it works</a>
+        <a href="#agents">Agents</a>
+        <a href="#safety">Safety</a>
+        <a href="#developers">Developers</a>
+      </nav>
+      <a class="btn btn-small" href="__CONSOLE_URL__">Open Console</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <p class="eyebrow">Multi-agent fraud defense API</p>
+          <h1>Fraud decisions that <span>ask the witness.</span></h1>
+          <p class="lede">
+            When the evidence on a payment is split, most fraud systems guess. Subpoena.ai convenes a
+            courtroom of AI agents that argue the case from evidence, and when they deadlock, it asks the
+            cardholder directly over WhatsApp, SMS or a phone call, verifies it's really them, and rules
+            with their answer.
+          </p>
+          <div class="cta-row">
+            <a class="btn" href="__CONSOLE_URL__">Open the Console <span aria-hidden="true">→</span></a>
+            <a class="btn btn-ghost" href="#how">See how it works</a>
+          </div>
+          <ul class="hero-facts">
+            <li><strong>&lt; 1 ms</strong> Tier 0 screen</li>
+            <li><strong>11</strong> specialised agents</li>
+            <li><strong>~$0.02</strong> per courtroom case</li>
+          </ul>
+        </div>
+
+        <!-- A case, as the Console shows it -->
+        <div class="case-card" aria-label="Example case">
+          <div class="case-head">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="case-id">eval_8839201 · $4,500.00 · AutoZone Online</span>
+          </div>
+          <ol class="transcript">
+            <li style="--d:0"><b class="a-clerk">Clerk</b> <span>New device, 2:14 AM, amount 5× the usual. 14 findings filed.</span></li>
+            <li style="--d:1"><b class="a-pros">Prosecutor</b> <span>Amount spike and unusual hour on a new device <i>[F2, F5]</i>. Block.</span></li>
+            <li style="--d:2"><b class="a-def">Defense</b> <span>Home IP, known merchant category, no mule links <i>[F8, F11]</i>. Approve.</span></li>
+            <li style="--d:3"><b class="a-judge">Judge</b> <span>p_fraud 0.50: evidentiary deadlock. <span class="pill pill-purple">Subpoena</span></span></li>
+            <li style="--d:4"><b class="a-bail">Bailiff</b> <span>No recent SIM swap. Code sent.</span></li>
+          </ol>
+          <div class="chat" style="--d:5">
+            <div class="bubble out">Hi Alex, this is Acme Bank Security. Did you make a $4,500 payment to AutoZone Online?</div>
+            <div class="bubble in">Yes, parts for my BMW project. 534918 📎 receipt.jpg</div>
+          </div>
+          <div class="verdict" style="--d:6">
+            <span class="pill pill-green">APPROVE</span>
+            <span>Code verified · receipt matches · p_fraud 0.01</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem -->
+    <section class="band">
+      <div class="wrap problem">
+        <p>
+          A blocked card at the checkout is a customer who calls support, or leaves. A missed fraud is a
+          chargeback. The hard cases sit in the middle, where the data alone can't tell, and the one
+          person who knows the answer is never asked.
+        </p>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="how" class="section">
+      <div class="wrap">
+        <p class="eyebrow">How it works</p>
+        <h2>From payment to verdict, in four steps.</h2>
+        <div class="steps">
+          <article class="step">
+            <span class="step-n">1</span>
+            <h3>Screen</h3>
+            <p>Hard rules and a risk score clear the obvious cases in under a millisecond. Only the unclear ones go to court.</p>
+          </article>
+          <article class="step">
+            <span class="step-n">2</span>
+            <h3>Debate</h3>
+            <p>The Clerk and five expert agents gather evidence. Prosecutor and Defense argue; any claim without a cited finding is struck before the Judge sees it.</p>
+          </article>
+          <article class="step">
+            <span class="step-n">3</span>
+            <h3>Subpoena</h3>
+            <p>On a deadlock, the Bailiff checks for a SIM swap and the cardholder gets one question and a one-time code by WhatsApp, SMS or a phone call.</p>
+          </article>
+          <article class="step">
+            <span class="step-n">4</span>
+            <h3>Verdict</h3>
+            <p>The Judge re-rules with the verified testimony. The bank gets a signed webhook; the Stenographer writes the plain-English why.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Agents -->
+    <section id="agents" class="section section-alt">
+      <div class="wrap">
+        <p class="eyebrow">The courtroom</p>
+        <h2>Every agent has one job, and only the tools for it.</h2>
+        <p class="sub">Each agent connects to its own MCP endpoint, so it can only reach what its role needs. The Prosecutor can't message a customer; the Witness can't see the evidence.</p>
+        <div class="agents">
+          <div class="agent"><span style="--c:#0263e0"></span><h3>Clerk</h3><p>Opens the case and pulls baselines, history and device data.</p></div>
+          <div class="agent"><span style="--c:#0b7a8a"></span><h3>Expert witnesses</h3><p>Geo, Device, Velocity, Merchant and Graph each file cited findings.</p></div>
+          <div class="agent"><span style="--c:#d61f1f"></span><h3>Prosecutor</h3><p>Argues for blocking, from the findings only.</p></div>
+          <div class="agent"><span style="--c:#14b053"></span><h3>Defense</h3><p>Argues for approving, and rebuts the prosecution.</p></div>
+          <div class="agent"><span style="--c:#6d2ed1"></span><h3>Judge</h3><p>Rules a calibrated p_fraud and, if needed, issues the subpoena.</p></div>
+          <div class="agent"><span style="--c:#c25700"></span><h3>Bailiff</h3><p>SIM-swap lookup and one-time code before any testimony counts.</p></div>
+          <div class="agent"><span style="--c:#4b5671"></span><h3>Stenographer</h3><p>Explains the verdict in plain English for analysts and customers.</p></div>
+          <div class="agent"><span style="--c:#f22f46"></span><h3>Analyst</h3><p>The human appeals court: override any verdict from the Console.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Channels -->
+    <section class="section">
+      <div class="wrap split">
+        <div>
+          <p class="eyebrow">The witness</p>
+          <h2>Ask the customer where they already are.</h2>
+          <p class="sub">The subpoena goes out on the first channel the bank's policy allows. If it isn't delivered, because the WhatsApp window has closed or a call isn't answered, it moves to the next.</p>
+        </div>
+        <div class="channels">
+          <div class="channel"><span class="ch-icon">💬</span><div><h3>WhatsApp</h3><p>Question, code and a photo of the receipt in one chat.</p></div></div>
+          <div class="channel"><span class="ch-icon">✉️</span><div><h3>SMS</h3><p>Two-way text from the bank's number.</p></div></div>
+          <div class="channel"><span class="ch-icon">📞</span><div><h3>Phone call</h3><p>The question is read aloud; the code goes on the keypad and the answer is spoken.</p></div></div>
+          <div class="channel"><span class="ch-icon">🧾</span><div><h3>Receipt photos</h3><p>Read by Gemini and checked against the payment. A receipt that doesn't match never auto-approves.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Safety -->
+    <section id="safety" class="section section-dark">
+      <div class="wrap">
+        <p class="eyebrow">Built for a regulated room</p>
+        <h2>Guardrails are in the architecture, not the prompt.</h2>
+        <div class="safety">
+          <div><h3>Testimony is untrusted</h3><p>A tool-less extractor turns the customer's words into structured claims. "Ignore previous instructions" is just text.</p></div>
+          <div><h3>Identity before testimony</h3><p>Carrier SIM-swap check, then a one-time code. Unknown SIM status fails closed.</p></div>
+          <div><h3>Cite or be struck</h3><p>Arguments that don't reference a finding never reach the Judge.</p></div>
+          <div><h3>Policy decides, not the model</h3><p>The Judge outputs a probability; the bank's versioned policy maps it to an outcome.</p></div>
+          <div><h3>Every change is on record</h3><p>Append-only audit log, analyst overrides with reasons, signed webhooks.</p></div>
+          <div><h3>Least privilege for people</h3><p>Google sign-in, Admin / Analyst / Viewer roles, personal data masked for viewers.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Developers -->
+    <section id="developers" class="section">
+      <div class="wrap split">
+        <div>
+          <p class="eyebrow">Developers</p>
+          <h2>One API call. A verdict, or a case to follow.</h2>
+          <p class="sub">Send the transaction; clear cases come back in the response. Courtroom cases return <code>202</code> and stream every step over server-sent events, then post the verdict to your webhook, Slack, Pub/Sub or BigQuery.</p>
+          <ul class="checks">
+            <li>Idempotency keys and RFC 9457 errors</li>
+            <li>Live event stream for every case</li>
+            <li>Policy simulator before you publish thresholds</li>
+            <li>API Playground in the Console</li>
+          </ul>
+          <a class="btn" href="__CONSOLE_URL__/playground">Try it in the Playground <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="code" aria-label="Example request and response">
+          <div class="code-tabs"><span class="on">Request</span></div>
+<pre><span class="c-m">curl</span> -X POST $API/v1/evaluations \
+  -H <span class="c-s">"Authorization: Bearer $SUBPOENA_API_KEY"</span> \
+  -H <span class="c-s">"Idempotency-Key: 6f1c…"</span> \
+  -d <span class="c-s">'{
+    "transaction_id": "tx_8839201",
+    "user_id": "usr_9921",
+    "amount": 4500, "currency": "USD",
+    "merchant": { "name": "AutoZone Online", "mcc": "5533" },
+    "witness": { "phone": "+14155550123",
+                 "allowed_channels": ["WHATSAPP", "VOICE"] }
+  }'</span></pre>
+          <div class="code-tabs"><span class="on">202 Accepted</span></div>
+<pre>{
+  <span class="c-k">"evaluation_id"</span>: <span class="c-s">"eval_2scx8999p8kwf7e4"</span>,
+  <span class="c-k">"status"</span>: <span class="c-s">"AWAITING_TESTIMONY"</span>,
+  <span class="c-k">"p_fraud"</span>: <span class="c-n">0.5</span>,
+  <span class="c-k">"subpoena"</span>: { <span class="c-k">"channel"</span>: <span class="c-s">"WHATSAPP"</span> }
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stack -->
+    <section class="section section-alt">
+      <div class="wrap">
+        <p class="eyebrow">Under the hood</p>
+        <h2>Built on Google Cloud and Twilio.</h2>
+        <div class="stack">
+          <span>Vertex AI Gemini</span><span>Agent Development Kit</span><span>Model Context Protocol</span>
+          <span>Cloud Run</span><span>Firestore</span><span>Pub/Sub</span><span>Cloud Tasks</span><span>BigQuery</span>
+          <span>Twilio WhatsApp</span><span>Twilio Voice</span><span>Twilio Verify</span><span>Twilio Lookup</span>
+          <span>FastAPI</span><span>Next.js</span><span>Twilio Paste</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final">
+      <div class="wrap final-inner">
+        <h2>Watch a case go to court.</h2>
+        <p>Open the Console, send a test transaction and follow the debate live, all the way to the witness and the verdict.</p>
+        <a class="btn" href="__CONSOLE_URL__">Open the Console <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="brand small"><img src="/favicon.svg" alt="" width="20" height="20" /> Subpoena<em>.ai</em></span>
+      <span>A multi-agent fraud defense API that calls the user as a witness.</span>
+      <a href="__CONSOLE_URL__">Console</a>
+    </div>
+  </footer>
+</body>
+</html>

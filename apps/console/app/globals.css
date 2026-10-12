@@ -7,7 +7,7 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85em
 
 .login { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); background: #fff; }
 .login-brand {
-  display: flex; flex-direction: column; justify-content: space-between; gap: 48px; padding: 48px 56px; color: #fff;
+  display: flex; flex-direction: column; gap: 48px; padding: 48px 56px; color: #fff;
   background: radial-gradient(120% 80% at 0% 0%, #2b1830 0%, transparent 60%), linear-gradient(160deg, #121c2d 0%, #0b1220 100%);
 }
 .login-brand h1 { font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; max-width: 460px; }
@@ -19,7 +19,7 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85em
   flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
   background: rgba(255, 84, 102, 0.14); color: #ff7a88; font-weight: 700; font-size: 13px;
 }
-.login-brand small { color: #7d869a; font-size: 12px; }
+.login-brand > div { margin: auto 0; } /* headline centred under the logo */
 .login-main { display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
 .login-mobile-logo { display: none; }
 @media (max-width: 900px) {
@@ -81,3 +81,19 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85em
 .pg-event pre .j-key { color: #93c5fd; } .pg-event pre .j-str { color: #86efac; }
 .pg-event pre .j-num { color: #fbbf24; } .pg-event pre .j-lit { color: #f9a8d4; }
 .pg-end { padding: 8px 12px; font-size: 12px; color: #0b7a39; font-weight: 600; border-top: 1px solid #eef0f4; }
+
+.pg-url {
+  display: flex; align-items: stretch; height: 40px; border: 1px solid #8891aa; border-radius: 8px; background: #fff;
+  overflow: hidden; font: 13px/1 "JetBrains Mono", ui-monospace, monospace;
+}
+.pg-url:focus-within { border-color: #0263e0; box-shadow: 0 0 0 3px rgba(2, 99, 224, 0.2); }
+.pg-url-method {
+  display: flex; align-items: center; padding: 0 12px; font-weight: 700; letter-spacing: 0.02em;
+  background: #f4f4f6; border-right: 1px solid #e1e3ea;
+}
+.pg-url-base { display: flex; align-items: center; padding-left: 12px; color: #8891aa; white-space: nowrap; }
+.pg-url input {
+  flex: 1; min-width: 0; border: 0; outline: none; padding: 0 12px 0 0; background: transparent;
+  font: inherit; color: #121c2d;
+}
+.pg-resolved { font: 12px "JetBrains Mono", ui-monospace, monospace; word-break: break-all; }

@@ -1,11 +1,14 @@
-# Builds both images: gcloud builds submit --config infra/gcp/cloudbuild.yaml --substitutions _TAG=...
+# Builds the three images: gcloud builds submit --config infra/gcp/cloudbuild.yaml --substitutions _TAG=...
 steps:
   - name: gcr.io/cloud-builders/docker
     args: ["build", "-f", "Dockerfile.backend", "-t", "${_REPO}/backend:${_TAG}", "."]
   - name: gcr.io/cloud-builders/docker
     dir: apps/console
     args: ["build", "-t", "${_REPO}/console:${_TAG}", "."]
-images: ["${_REPO}/backend:${_TAG}", "${_REPO}/console:${_TAG}"]
+  - name: gcr.io/cloud-builders/docker
+    dir: apps/site
+    args: ["build", "-t", "${_REPO}/site:${_TAG}", "."]
+images: ["${_REPO}/backend:${_TAG}", "${_REPO}/console:${_TAG}", "${_REPO}/site:${_TAG}"]
 substitutions:
   _REPO: us-central1-docker.pkg.dev/${PROJECT_ID}/subpoena
   _TAG: latest

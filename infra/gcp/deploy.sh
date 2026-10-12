@@ -16,7 +16,7 @@
 # <console url>/api/auth/google/callback. Add members with `subpoena_api.admin add-member`. Only the listed numbers are contacted
 # through Twilio; seeded demo witnesses stay on the simulator.
 #
-# Services (Cloud Run): api (public, API-key auth), console (public, key login),
+# Services (Cloud Run): site (public website), api (public, API-key auth), console (public, key login),
 # mcp (private), courtroom (private; Pub/Sub push + Cloud Tasks with OIDC).
 set -euo pipefail
 
@@ -233,9 +233,16 @@ for svc in subpoena-api subpoena-courtroom; do  # links in Slack alerts
   $G run services update "$svc" --region="$REGION" --update-env-vars="SUBPOENA_CONSOLE_PUBLIC_URL=$CONSOLE_URL" >/dev/null
 done
 
+echo "==> Website"
+$G run deploy subpoena-site --region="$REGION" --image="$REPO/site:$TAG" --allow-unauthenticated \
+  --min-instances=0 --max-instances=2 --memory=128Mi --cpu=1 --concurrency=200 \
+  --set-env-vars="CONSOLE_URL=$CONSOLE_URL"
+SITE_URL=$($G run services describe subpoena-site --region="$REGION" --format='value(status.url)')
+
 cat <<OUT
 
 Deployed $TAG
+  Website   $SITE_URL
   API       $API_URL
   Console   $CONSOLE_URL
   Courtroom $COURT_URL (private)
