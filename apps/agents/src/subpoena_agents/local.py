@@ -53,7 +53,9 @@ def build_local_app(
     settings: Settings, court_settings: CourtSettings, *, bootstrap: bool
 ) -> FastAPI:
     services = build_services(settings)
-    court = build_courtroom(court_settings, services.store, notifier=services.notifier)
+    court = build_courtroom(
+        court_settings, services.store, notifier=services.notifier, media=services.media
+    )
     services.publisher = InlinePublisher(court)
     application = create_app(services, bootstrap_local=bootstrap)
     application.state.courtroom = court

@@ -156,7 +156,7 @@ def build_server(agent: Agent, deps: McpDeps) -> MCPServer:
         body = (
             f"Hi {first}, this is {bank} Security. We're checking a {_money(t.amount)} payment to "
             f"{t.merchant.name}. {question.strip()} Reply YES or NO, or tell us more, and also "
-            "send the 6-digit code we just texted you."
+            "send the 6-digit code we just texted you. A photo of the receipt helps too."
         )
         ctx = {
             "workspace_id": evaluation.workspace_id,

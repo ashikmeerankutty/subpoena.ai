@@ -7,7 +7,7 @@ from subpoena_mcp.app import build_deps
 from subpoena_mcp.client import McpConnector
 from subpoena_mcp.config import McpSettings
 from subpoena_mcp.server import ALLOW_LIST, build_server
-from subpoena_store import Store
+from subpoena_store import MediaStore, Store, build_media_store
 
 from .config import CourtSettings
 from .courtroom import Courtroom
@@ -24,6 +24,7 @@ def build_courtroom(
     scheduler: Scheduler | None = None,
     llm: Llm | None = None,
     notifier: BankNotifier | None = None,
+    media: MediaStore | None = None,
 ) -> Courtroom:
     if settings.mcp == "http":
         assert settings.mcp_url, "SUBPOENA_MCP_URL is required when SUBPOENA_MCP=http"
@@ -49,6 +50,8 @@ def build_courtroom(
         notifier=notifier or BankNotifier(settings.webhook_signing_secret.get_secret_value()),
         scheduler=scheduler or LocalScheduler(),
         max_rounds=settings.max_rounds,
+        media=media
+        or build_media_store(settings.media_store, settings.media_bucket, settings.gcp_project),
     )
     if local and isinstance(court.scheduler, LocalScheduler):
         court.scheduler.on_timeout = court.handle_timeout

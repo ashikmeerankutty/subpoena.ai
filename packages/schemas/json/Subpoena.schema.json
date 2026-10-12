@@ -22,6 +22,42 @@
       "title": "DeliveryStatus",
       "type": "string"
     },
+    "MediaRef": {
+      "additionalProperties": false,
+      "description": "A photo the witness sent. Bytes live in the media store under ``{workspace_id}/{id}``.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "content_type": {
+          "title": "Content Type",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "sha256": {
+          "title": "Sha256",
+          "type": "string"
+        },
+        "source": {
+          "description": "twilio | simulator",
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "content_type",
+        "size_bytes",
+        "sha256",
+        "source"
+      ],
+      "title": "MediaRef",
+      "type": "object"
+    },
     "SubpoenaState": {
       "description": "Lifecycle of one subpoena, driven by the Bailiff and inbound messages.",
       "enum": [
@@ -147,6 +183,14 @@
       ],
       "default": null,
       "title": "Responded At"
+    },
+    "media": {
+      "description": "Photos sent by the witness",
+      "items": {
+        "$ref": "#/$defs/MediaRef"
+      },
+      "title": "Media",
+      "type": "array"
     }
   },
   "required": [

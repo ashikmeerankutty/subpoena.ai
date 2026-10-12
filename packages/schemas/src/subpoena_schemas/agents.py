@@ -54,3 +54,22 @@ class ExplanationOut(BaseModel):
     sar_draft: str | None = Field(
         default=None, description="Suspicious Activity Report narrative, only when blocked"
     )
+
+
+class ReceiptOut(BaseModel):
+    """What a receipt / order-confirmation photo shows. Read from pixels only, never trusted."""
+
+    is_receipt: bool = Field(
+        description="true if the image is a receipt, invoice or order confirmation"
+    )
+    merchant: str | None = Field(
+        description="Merchant or store name as printed, null if not visible"
+    )
+    amount: str | None = Field(
+        description="Grand total as a plain decimal like 4500.00, null if not visible"
+    )
+    currency: str | None = Field(
+        description="ISO 4217 code if shown or obvious from the symbol, else null"
+    )
+    date: str | None = Field(description="Purchase date as YYYY-MM-DD, null if not visible")
+    order_reference: str | None = Field(description="Order or receipt number if printed, else null")

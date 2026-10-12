@@ -27,6 +27,8 @@ export interface Testimony {
   claims: { confirms_transaction: boolean | null; stated_reason: string | null; mentions_travel: boolean; sentiment: string | null };
   witness_auth_result: string;
   flagged_by_screening: boolean;
+  media_refs?: string[];
+  receipt?: ReceiptCheck | null;
   screening_reasons: string[];
   received_at: string;
 }
@@ -55,6 +57,7 @@ export interface Evaluation {
   amount: string;
   currency: string;
   merchant: string;
+  occurred_at: string;
 }
 
 export interface PipelineEvent {
@@ -72,6 +75,22 @@ export interface PipelineEvent {
   created_at: string;
 }
 
+export interface MediaRef { id: string; content_type: string; size_bytes: number; source: string }
+
+export interface ReceiptCheck {
+  media_id: string;
+  result: "MATCH" | "PARTIAL" | "MISMATCH" | "NOT_A_RECEIPT" | "UNREADABLE";
+  merchant: string | null;
+  amount: string | null;
+  currency: string | null;
+  date: string | null;
+  order_reference: string | null;
+  merchant_match: boolean | null;
+  amount_match: boolean | null;
+  date_match: boolean | null;
+  reasons: string[];
+}
+
 export interface WitnessMessage {
   id: string;
   phone: string;
@@ -79,6 +98,7 @@ export interface WitnessMessage {
   channel: string;
   body: string;
   status: string;
+  media?: MediaRef[];
   created_at: string;
 }
 

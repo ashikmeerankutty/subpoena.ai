@@ -26,6 +26,7 @@ from subpoena_schemas import (
     ExpertFindingOut,
     ExpertReport,
     ExplanationOut,
+    ReceiptOut,
     RulingOut,
     TestimonyClaims,
     TokenUsage,
@@ -48,9 +49,17 @@ class LlmResult[R]:
     latency_ms: int
 
 
+Image = tuple[bytes, str]  # (data, mime type)
+
+
 class Llm(Protocol):
     async def generate(
-        self, role: Agent, instruction: str, context: dict[str, Any], schema: type[T]
+        self,
+        role: Agent,
+        instruction: str,
+        context: dict[str, Any],
+        schema: type[T],
+        images: list[Image] | None = None,
     ) -> LlmResult[T]: ...
 
 
@@ -71,7 +80,12 @@ class GeminiLlm:
         return self._s.pro_model if role is Agent.JUDGE else self._s.flash_model
 
     async def generate(
-        self, role: Agent, instruction: str, context: dict[str, Any], schema: type[T]
+        self,
+        role: Agent,
+        instruction: str,
+        context: dict[str, Any],
+        schema: type[T],
+        images: list[Image] | None = None,
     ) -> LlmResult[T]:
         from google.genai import errors
 
@@ -83,7 +97,7 @@ class GeminiLlm:
             model = models[min(transient // RETRIES_PER_MODEL, len(models) - 1)]
             try:
                 async with self._slots:
-                    return await self._once(role, instruction, context, schema, model)
+                    return await self._once(role, instruction, context, schema, model, images)
             except (ValidationError, ValueError, KeyError) as exc:
                 invalid += 1  # retry once, then escalate (Spec §4)
                 if invalid >= 2:
@@ -102,7 +116,13 @@ class GeminiLlm:
         return [m for m in (self._s.flash_fallback_model,) if m]
 
     async def _once(
-        self, role: Agent, instruction: str, context: dict[str, Any], schema: type[T], model: str
+        self,
+        role: Agent,
+        instruction: str,
+        context: dict[str, Any],
+        schema: type[T],
+        model: str,
+        images: list[Image] | None = None,
     ) -> LlmResult[T]:
         from google.adk.agents import LlmAgent
         from google.adk.runners import InMemoryRunner
@@ -123,7 +143,9 @@ class GeminiLlm:
         )
         runner = InMemoryRunner(agent=agent, app_name="courtroom")
         session = await runner.session_service.create_session(app_name="courtroom", user_id="court")
-        message = types.Content(role="user", parts=[types.Part(text=render(context))])
+        parts = [types.Part(text=render(context))]
+        parts += [types.Part.from_bytes(data=data, mime_type=mime) for data, mime in images or []]
+        message = types.Content(role="user", parts=parts)
         started = time.perf_counter()
         text, usage = None, None
         async for event in runner.run_async(
@@ -159,7 +181,12 @@ class ScriptedLlm:
     model = "scripted"
 
     async def generate(
-        self, role: Agent, instruction: str, context: dict[str, Any], schema: type[T]
+        self,
+        role: Agent,
+        instruction: str,
+        context: dict[str, Any],
+        schema: type[T],
+        images: list[Image] | None = None,
     ) -> LlmResult[T]:
         value: BaseModel
         if schema is ExpertReport:
@@ -175,6 +202,8 @@ class ScriptedLlm:
         elif schema is TestimonyClaims:
             raw = re.sub(r"</?untrusted>", "", context["witness_message"])
             value = self._extract(raw)
+        elif schema is ReceiptOut:
+            value = self._read_receipt(images or [])
         else:
             raise LlmError(f"scripted backend has no output for {schema.__name__}")
         return LlmResult(
@@ -214,6 +243,19 @@ class ScriptedLlm:
     def _rule(ctx: dict[str, Any]) -> RulingOut:
         testimony = ctx.get("testimony")
         cited = [f["id"] for f in ctx["findings"] if f["severity"] in ("HIGH", "CRITICAL")]
+        receipt = (testimony or {}).get("receipt") or {}
+        if (
+            testimony
+            and testimony["claims"].get("confirms_transaction")
+            and receipt.get("result") == "MISMATCH"
+        ):
+            return RulingOut(
+                p_fraud=0.7,
+                confidence=0.6,
+                cited_findings=cited,
+                rationale="The cardholder confirmed the purchase, but the receipt they sent does not "
+                "match this transaction, which undermines the testimony.",
+            )
         if testimony and testimony["claims"].get("confirms_transaction"):
             return RulingOut(
                 p_fraud=0.08,
@@ -240,6 +282,23 @@ class ScriptedLlm:
             subpoena_question=question,
             rationale=f"Fraud-supporting evidence weighs {fraud:.1f} against {legit:.1f} for legitimacy.",
         )
+
+    @staticmethod
+    def _read_receipt(images: list[Image]) -> ReceiptOut:
+        """No pixels here: a test "photo" is the receipt's fields as JSON; anything else is
+        reported as not a receipt."""
+        blank = {
+            "merchant": None,
+            "amount": None,
+            "currency": None,
+            "date": None,
+            "order_reference": None,
+        }
+        try:
+            fields = json.loads(images[0][0])
+            return ReceiptOut.model_validate({**blank, "is_receipt": True, **fields})
+        except (IndexError, ValueError, UnicodeDecodeError):
+            return ReceiptOut(is_receipt=False, **blank)
 
     @staticmethod
     def _explain(ctx: dict[str, Any]) -> ExplanationOut:

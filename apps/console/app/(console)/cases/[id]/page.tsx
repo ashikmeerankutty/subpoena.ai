@@ -16,6 +16,7 @@ import { OverrideModal } from "@/components/OverrideModal";
 import { PipelineGraph } from "@/components/PipelineGraph";
 import { PageHeader, Panel, useMe } from "@/components/Shell";
 import { PFraud, StatusBadge } from "@/components/StatusBadge";
+import { ReceiptCard } from "@/components/ReceiptCard";
 import { Transcript } from "@/components/Transcript";
 import { WitnessChat } from "@/components/WitnessChat";
 import { api, usePoll } from "@/lib/api";
@@ -199,6 +200,13 @@ export default function CasePage() {
                     <Text as="p" marginTop="space30">Confirms: <strong>{String(ev.testimony.claims.confirms_transaction)}</strong> · reason: {ev.testimony.claims.stated_reason ?? "—"}</Text>
                     <Text as="p">Witness auth: {ev.testimony.witness_auth_result} · received {time(ev.testimony.received_at)}</Text>
                     {ev.testimony.flagged_by_screening ? <Badge as="span" variant="error">Flagged: {ev.testimony.screening_reasons.join(", ")}</Badge> : null}
+                    {ev.testimony.receipt ? (
+                      <Box marginTop="space50">
+                        <ReceiptCard check={ev.testimony.receipt} expected={{
+                          merchant: ev.merchant, amount: ev.amount, currency: ev.currency, date: ev.occurred_at,
+                        }} />
+                      </Box>
+                    ) : null}
                   </> : <Text as="p" color="colorTextWeak">{ev.subpoena ? "Awaiting the witness." : "No subpoena was issued."}</Text>}
                 </Panel>
               </Box>

@@ -3,7 +3,11 @@ name = "subpoena-store"
 version = "0.1.0"
 description = "Persistence for Subpoena.ai: in-memory and Firestore implementations of one Store protocol"
 requires-python = ">=3.12"
-dependencies = ["subpoena-schemas", "google-cloud-firestore>=2.18"]
+dependencies = [
+    "subpoena-schemas",
+    "google-cloud-firestore>=2.18",
+    "google-cloud-storage>=2.18",
+]
 
 [tool.uv.sources]
 subpoena-schemas = { workspace = true }

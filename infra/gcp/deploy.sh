@@ -28,7 +28,7 @@ sa() { echo "$1@$PROJECT.iam.gserviceaccount.com"; }
 echo "==> APIs"
 $G services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
   cloudtasks.googleapis.com secretmanager.googleapis.com iam.googleapis.com pubsub.googleapis.com \
-  firestore.googleapis.com bigquery.googleapis.com aiplatform.googleapis.com
+  firestore.googleapis.com bigquery.googleapis.com aiplatform.googleapis.com storage.googleapis.com
 
 echo "==> Artifact Registry"
 $G artifacts repositories describe subpoena --location="$REGION" >/dev/null 2>&1 ||
@@ -100,6 +100,20 @@ NUM=$($G projects describe "$PROJECT" --format='value(projectNumber)')
 $G iam service-accounts add-iam-policy-binding "$(sa sp-invoker)" \
   --member="serviceAccount:service-$NUM@gcp-sa-pubsub.iam.gserviceaccount.com" --role=roles/iam.serviceAccountTokenCreator >/dev/null
 
+echo "==> Evidence bucket (witness photos, private, deleted after 30 days)"
+BUCKET="$PROJECT-evidence"
+gcloud storage buckets describe "gs://$BUCKET" --project="$PROJECT" >/dev/null 2>&1 ||
+  gcloud storage buckets create "gs://$BUCKET" --project="$PROJECT" --location="$REGION" \
+    --uniform-bucket-level-access --public-access-prevention --quiet
+LIFECYCLE=$(mktemp)
+echo '{"rule":[{"action":{"type":"Delete"},"condition":{"age":30}}]}' >"$LIFECYCLE"
+gcloud storage buckets update "gs://$BUCKET" --project="$PROJECT" --lifecycle-file="$LIFECYCLE" --quiet >/dev/null
+rm -f "$LIFECYCLE"
+for pair in "sp-api:roles/storage.objectCreator" "sp-api:roles/storage.objectViewer" "sp-court:roles/storage.objectViewer"; do
+  gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --project="$PROJECT" \
+    --member="serviceAccount:$(sa "${pair%%:*}")" --role="${pair##*:}" --quiet >/dev/null
+done
+
 echo "==> Firestore indexes (async)"
 for extra in "" status verdict transaction.user_id; do
   args=(--collection-group=evaluations --field-config=field-path=workspace_id,order=ascending)
@@ -115,11 +129,12 @@ fi
 
 COMMON=(--region="$REGION" --image="$REPO/backend:$TAG" --min-instances=0 --cpu=1)
 ENV="SUBPOENA_ENV=demo,SUBPOENA_GCP_PROJECT=$PROJECT,SUBPOENA_STORE=firestore"
+MEDIA="SUBPOENA_MEDIA_STORE=gcs,SUBPOENA_MEDIA_BUCKET=$BUCKET"
 
 MCP_ENV="APP=subpoena_mcp.app:create_app,$ENV,SUBPOENA_DATA=bigquery,SUBPOENA_WITNESS_CHANNEL=simulator"
 MCP_SECRETS="SUBPOENA_AGENT_TOKEN_SECRET=agent-token-secret:latest"
 API_SECRETS="SUBPOENA_API_KEY_PEPPER=api-key-pepper:latest,SUBPOENA_WEBHOOK_SIGNING_SECRET=webhook-signing-secret:latest"
-API_ENV="APP=subpoena_api.main:create_app,$ENV,SUBPOENA_PUBLISHER=pubsub,SUBPOENA_BASELINES=firestore,SUBPOENA_WITNESS_SIMULATOR=true"
+API_ENV="APP=subpoena_api.main:create_app,$ENV,$MEDIA,SUBPOENA_PUBLISHER=pubsub,SUBPOENA_BASELINES=firestore,SUBPOENA_WITNESS_SIMULATOR=true"
 CONSOLE_ARGS=()
 if [ -n "$GOOGLE" ]; then
   API_ENV+=",SUBPOENA_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
@@ -135,6 +150,7 @@ if [ -n "$TWILIO" ]; then
   MCP_ENV+="|SUBPOENA_SIM_SWAP_REQUIRED=${TWILIO_SIM_SWAP_REQUIRED:-false}"
   MCP_SECRETS+=",SUBPOENA_TWILIO_AUTH_TOKEN=twilio-auth-token:latest"
   API_SECRETS+=",SUBPOENA_TWILIO_AUTH_TOKEN=twilio-auth-token:latest"
+  API_ENV+=",SUBPOENA_TWILIO_ACCOUNT_SID=$TWILIO_ACCOUNT_SID"  # to download witness photos
 fi
 
 echo "==> MCP server"
@@ -151,7 +167,7 @@ $G tasks queues describe subpoena-timeouts --location="$REGION" >/dev/null 2>&1 
 echo "==> Courtroom"
 $G run deploy subpoena-courtroom "${COMMON[@]}" --service-account="$(sa sp-court)" --no-allow-unauthenticated \
   --memory=1Gi --max-instances=2 --concurrency=10 --timeout=600 \
-  --set-env-vars="APP=subpoena_agents.service:create_app,$ENV,SUBPOENA_LLM=gemini,SUBPOENA_MCP=http,SUBPOENA_MCP_URL=$MCP_URL,SUBPOENA_MCP_AUDIENCE=$MCP_URL,SUBPOENA_TASKS_QUEUE=subpoena-timeouts,SUBPOENA_TASKS_LOCATION=$REGION,SUBPOENA_TASKS_SERVICE_ACCOUNT=$(sa sp-invoker),SUBPOENA_COURTROOM_URL=pending" \
+  --set-env-vars="APP=subpoena_agents.service:create_app,$ENV,$MEDIA,SUBPOENA_LLM=gemini,SUBPOENA_MCP=http,SUBPOENA_MCP_URL=$MCP_URL,SUBPOENA_MCP_AUDIENCE=$MCP_URL,SUBPOENA_TASKS_QUEUE=subpoena-timeouts,SUBPOENA_TASKS_LOCATION=$REGION,SUBPOENA_TASKS_SERVICE_ACCOUNT=$(sa sp-invoker),SUBPOENA_COURTROOM_URL=pending" \
   --set-secrets="SUBPOENA_AGENT_TOKEN_SECRET=agent-token-secret:latest,SUBPOENA_WEBHOOK_SIGNING_SECRET=webhook-signing-secret:latest"
 COURT_URL=$($G run services describe subpoena-courtroom --region="$REGION" --format='value(status.url)')
 $G run services update subpoena-courtroom --region="$REGION" --update-env-vars="SUBPOENA_COURTROOM_URL=$COURT_URL" >/dev/null

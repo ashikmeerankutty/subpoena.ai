@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import FastAPI
 
 from subpoena_schemas import ApiKey, Policy, Scope, Workspace
-from subpoena_store import MemoryStore, Store
+from subpoena_store import MemoryStore, Store, build_media_store
 
 from . import problems
 from .baselines import BaselineSource, FirestoreBaselines, SeedBaselines
@@ -65,6 +65,7 @@ def build_services(settings: Settings) -> Services:
         google_verifier=google_verifier(settings.google_client_id)
         if settings.google_client_id
         else None,
+        media=build_media_store(settings.media_store, settings.media_bucket, settings.gcp_project),
     )
 
 

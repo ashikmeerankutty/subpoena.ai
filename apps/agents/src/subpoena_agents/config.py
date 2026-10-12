@@ -35,3 +35,6 @@ class CourtSettings(BaseSettings):
 
     webhook_signing_secret: SecretStr = SecretStr("dev-only-webhook-secret")
     daily_case_cap: int = 300  # cost governor: courtroom cases per workspace per day
+
+    media_store: Literal["memory", "gcs"] = "memory"  # witness photos (receipts)
+    media_bucket: str | None = None

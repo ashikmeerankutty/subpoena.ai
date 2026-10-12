@@ -95,6 +95,7 @@ class EvaluationResponse(Model):
     amount: str
     currency: str
     merchant: str
+    occurred_at: datetime
     links: Links
 
     @classmethod
@@ -123,6 +124,7 @@ class EvaluationResponse(Model):
             amount=str(ev.transaction.amount),
             currency=ev.transaction.currency,
             merchant=ev.transaction.merchant.name,
+            occurred_at=ev.transaction.occurred_at,
             links=ev.links,
         )
 

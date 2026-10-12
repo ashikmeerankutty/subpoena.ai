@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     sync_poll_interval_ms: int = 250
     sync_wait_max_ms: int = 30000
     google_client_id: str | None = None  # enables Console sign-in with Google
+    twilio_account_sid: str | None = None  # needed to download photos witnesses send
+    media_store: Literal["memory", "gcs"] = "memory"
+    media_bucket: str | None = None
+    max_media_bytes: int = 5_000_000
 
     @property
     def key_mode(self) -> str:

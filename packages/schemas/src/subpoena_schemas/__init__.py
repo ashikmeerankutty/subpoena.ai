@@ -1,6 +1,14 @@
 """Shared schemas: the single source of truth for API payloads, agent outputs and storage."""
 
-from .agents import ArgumentOut, ClaimOut, ExpertFindingOut, ExpertReport, ExplanationOut, RulingOut
+from .agents import (
+    ArgumentOut,
+    ClaimOut,
+    ExpertFindingOut,
+    ExpertReport,
+    ExplanationOut,
+    ReceiptOut,
+    RulingOut,
+)
 from .audit import Actor, ActorType, AuditEntry
 from .baseline import GeoPoint, UserBaseline
 from .common import (
@@ -40,7 +48,10 @@ from .policy import (
 )
 from .subpoena import (
     DeliveryStatus,
+    MediaRef,
     MessageDirection,
+    ReceiptCheck,
+    ReceiptResult,
     Subpoena,
     SubpoenaRef,
     SubpoenaState,
@@ -102,6 +113,7 @@ __all__ = [
     "HardRules",
     "KeyKind",
     "Links",
+    "MediaRef",
     "Member",
     "Merchant",
     "MessageDirection",
@@ -111,6 +123,9 @@ __all__ = [
     "PageMeta",
     "PipelineEvent",
     "Policy",
+    "ReceiptCheck",
+    "ReceiptOut",
+    "ReceiptResult",
     "Role",
     "RulingOut",
     "Scope",

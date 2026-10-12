@@ -22,6 +22,7 @@ class EventType(StrEnum):
     SUBPOENA_SENT = "SUBPOENA_SENT"
     WITNESS_AUTH = "WITNESS_AUTH"
     TESTIMONY = "TESTIMONY"
+    EVIDENCE = "EVIDENCE"  # exhibits the witness supplied, e.g. a receipt photo check
     VERDICT = "VERDICT"
     OVERRIDE = "OVERRIDE"
     ERROR = "ERROR"

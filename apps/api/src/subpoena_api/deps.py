@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Coroutine
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Annotated, Any
 
 from fastapi import Depends, Request
 
 from subpoena_schemas import Actor, ApiKey, AuditEntry, Policy, Role, Scope, role_for, utcnow
-from subpoena_store import Store
+from subpoena_store import MediaStore, MemoryMediaStore, Store
 
 from .baselines import BaselineSource
 from .problems import ProblemError
@@ -33,6 +33,7 @@ class Services:
     baselines: BaselineSource
     notifier: BankNotifier
     google_verifier: GoogleVerifier | None = None
+    media: MediaStore = field(default_factory=MemoryMediaStore)
 
 
 def get_services(request: Request) -> Services:

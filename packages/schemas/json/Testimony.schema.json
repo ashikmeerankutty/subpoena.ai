@@ -1,5 +1,138 @@
 {
   "$defs": {
+    "ReceiptCheck": {
+      "additionalProperties": false,
+      "description": "Deterministic comparison of an extracted receipt with the transaction (Spec \u00a76 step 5).",
+      "properties": {
+        "media_id": {
+          "title": "Media Id",
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/$defs/ReceiptResult"
+        },
+        "merchant": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Merchant"
+        },
+        "amount": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Amount"
+        },
+        "currency": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currency"
+        },
+        "date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date"
+        },
+        "order_reference": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Order Reference"
+        },
+        "merchant_match": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Merchant Match"
+        },
+        "amount_match": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Amount Match"
+        },
+        "date_match": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date Match"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "media_id",
+        "result"
+      ],
+      "title": "ReceiptCheck",
+      "type": "object"
+    },
+    "ReceiptResult": {
+      "enum": [
+        "MATCH",
+        "PARTIAL",
+        "MISMATCH",
+        "NOT_A_RECEIPT",
+        "UNREADABLE"
+      ],
+      "title": "ReceiptResult",
+      "type": "string"
+    },
     "TestimonyClaims": {
       "description": "Structured output of the tool-less extractor. Never contains instructions.",
       "properties": {
@@ -83,6 +216,17 @@
       },
       "title": "Media Refs",
       "type": "array"
+    },
+    "receipt": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReceiptCheck"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "witness_auth_result": {
       "$ref": "#/$defs/WitnessAuthResult"
