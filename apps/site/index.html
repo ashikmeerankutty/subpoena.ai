@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <a class="skip" href="#main">Skip to content</a>
   <header class="nav">
     <div class="wrap nav-inner">
       <a class="brand" href="#top" aria-label="Subpoena.ai home">
@@ -19,16 +20,19 @@
         <span>Subpoena<em>.ai</em></span>
       </a>
       <nav class="nav-links" aria-label="Sections">
+        <a href="#impact">Impact</a>
         <a href="#how">How it works</a>
         <a href="#agents">Agents</a>
         <a href="#safety">Safety</a>
+        <a href="#usage">Who it's for</a>
         <a href="#developers">Developers</a>
       </nav>
       <a class="btn btn-small" href="__CONSOLE_URL__">Open Console</a>
     </div>
   </header>
 
-  <main id="top">
+  <main id="main" tabindex="-1">
+    <span id="top"></span>
     <!-- Hero -->
     <section class="hero">
       <div class="wrap hero-grid">
@@ -53,7 +57,7 @@
         </div>
 
         <!-- A case, as the Console shows it -->
-        <div class="case-card" aria-label="Example case">
+        <div class="case-card" role="group" aria-label="Example case: a $4,500 auto-parts payment goes to court, the cardholder confirms on WhatsApp, and it is approved">
           <div class="case-head">
             <span class="dot"></span><span class="dot"></span><span class="dot"></span>
             <span class="case-id">eval_8839201 · $4,500.00 · AutoZone Online</span>
@@ -67,7 +71,7 @@
           </ol>
           <div class="chat" style="--d:5">
             <div class="bubble out">Hi Alex, this is Acme Bank Security. Did you make a $4,500 payment to AutoZone Online?</div>
-            <div class="bubble in">Yes, parts for my BMW project. 534918 📎 receipt.jpg</div>
+            <div class="bubble in">Yes, parts for my BMW project. 534918 <span aria-hidden="true">📎</span> receipt.jpg</div>
           </div>
           <div class="verdict" style="--d:6">
             <span class="pill pill-green">APPROVE</span>
@@ -85,6 +89,55 @@
           chargeback. The hard cases sit in the middle, where the data alone can't tell, and the one
           person who knows the answer is never asked.
         </p>
+      </div>
+    </section>
+
+    <!-- Impact -->
+    <section id="impact" class="section">
+      <div class="wrap">
+        <p class="eyebrow">Impact</p>
+        <h2>Fewer frozen cards. Less fraud. Customers asked only when it matters.</h2>
+        <p class="sub">Most fraud systems have two answers for an unclear payment: decline it and upset a genuine customer, or approve it and risk a loss. Subpoena.ai adds a third: ask the cardholder, safely, and decide with their answer.</p>
+        <div class="benefits">
+          <article class="benefit">
+            <h3>For cardholders</h3>
+            <ul>
+              <li><strong>Genuine purchases go through.</strong> An unusual but real payment is confirmed with one reply instead of a decline at checkout.</li>
+              <li><strong>No call-centre queue.</strong> The question arrives on WhatsApp, SMS or a phone call, in the app they already use, with nothing to install.</li>
+              <li><strong>Protected from takeovers.</strong> If their SIM was just swapped, nobody is asked: the payment is blocked and sent to an analyst.</li>
+              <li><strong>A clear reason.</strong> Every decision comes with a plain-English explanation the bank can share.</li>
+            </ul>
+          </article>
+          <article class="benefit">
+            <h3>For fraud teams</h3>
+            <ul>
+              <li><strong>Only the hard cases reach a person.</strong> Clear cases are decided automatically; deadlocks are resolved by the cardholder.</li>
+              <li><strong>Every decision shows its evidence.</strong> The full debate, the cited findings and the testimony are in the Console.</li>
+              <li><strong>Humans stay in charge.</strong> Analysts can override any verdict, and every change is in the audit log.</li>
+            </ul>
+          </article>
+          <article class="benefit">
+            <h3>For the bank</h3>
+            <ul>
+              <li><strong>Revenue kept.</strong> Fewer false declines means fewer abandoned purchases and fewer customers who switch cards.</li>
+              <li><strong>Losses avoided.</strong> Mule rings, sanctioned merchants and SIM-swap takeovers are blocked before money moves.</li>
+              <li><strong>Its own risk appetite.</strong> A versioned policy, tested in a simulator before it's published, turns the model's probability into the decision.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="demo-impact" role="group" aria-labelledby="demo-impact-title">
+          <div class="demo-impact-head">
+            <h3 id="demo-impact-title">What happened in the five demo scenarios</h3>
+            <p>Measured in the Console's Customer impact panel, on the synthetic cases that ship with the demo.</p>
+          </div>
+          <dl class="figures">
+            <div><dt>Genuine purchase approved</dt><dd>$4,500</dd><dd class="note">A 2 AM auto-parts order from a new device deadlocked the courtroom. The cardholder confirmed on WhatsApp and it went through instead of being declined.</dd></div>
+            <div><dt>Fraud stopped</dt><dd>$14,550</dd><dd class="note">A $9,800 transfer to a mule ring, a $4,500 SIM-swap takeover and a sanctioned merchant, blocked before any money moved.</dd></div>
+            <div><dt>Cardholders not disturbed</dt><dd>4 of 5</dd><dd class="note">Only the true deadlock asked the customer anything. The rest were decided from the evidence alone.</dd></div>
+            <div><dt>Takeover caught at the door</dt><dd>1</dd><dd class="note">The SIM was swapped the day before, so the Bailiff never sent the question to a phone the fraudster may control.</dd></div>
+          </dl>
+        </div>
       </div>
     </section>
 
@@ -129,7 +182,7 @@
             <span class="graph-title"><span class="live"></span> eval_8839201 · $4,500.00 · AutoZone Online</span>
             <button class="graph-replay" type="button">Replay</button>
           </div>
-          <div class="graph-scroll">
+          <div class="graph-scroll" tabindex="0" role="region" aria-label="Courtroom graph, scrolls sideways">
             <svg viewBox="-230 -24 1472 482" role="img" aria-label="The courtroom: Tier 0 hands the case to the Clerk, five expert witnesses file findings for the Prosecutor and Defense, the Judge rules or subpoenas the Witness through the Bailiff, and the Stenographer explains the verdict."></svg>
           </div>
           <figcaption class="graph-caption">The case opens.</figcaption>
@@ -156,10 +209,10 @@
           <p class="sub">The subpoena goes out on the first channel the bank's policy allows. If it isn't delivered, because the WhatsApp window has closed or a call isn't answered, it moves to the next.</p>
         </div>
         <div class="channels">
-          <div class="channel"><span class="ch-icon">💬</span><div><h3>WhatsApp</h3><p>Question, code and a photo of the receipt in one chat.</p></div></div>
-          <div class="channel"><span class="ch-icon">✉️</span><div><h3>SMS</h3><p>Two-way text from the bank's number.</p></div></div>
-          <div class="channel"><span class="ch-icon">📞</span><div><h3>Phone call</h3><p>The question is read aloud; the code goes on the keypad and the answer is spoken.</p></div></div>
-          <div class="channel"><span class="ch-icon">🧾</span><div><h3>Receipt photos</h3><p>Read by Gemini and checked against the payment. A receipt that doesn't match never auto-approves.</p></div></div>
+          <div class="channel"><span class="ch-icon" aria-hidden="true">💬</span><div><h3>WhatsApp</h3><p>Question, code and a photo of the receipt in one chat.</p></div></div>
+          <div class="channel"><span class="ch-icon" aria-hidden="true">✉️</span><div><h3>SMS</h3><p>Two-way text from the bank's number.</p></div></div>
+          <div class="channel"><span class="ch-icon" aria-hidden="true">📞</span><div><h3>Phone call</h3><p>The question is read aloud; the code goes on the keypad and the answer is spoken.</p></div></div>
+          <div class="channel"><span class="ch-icon" aria-hidden="true">🧾</span><div><h3>Receipt photos</h3><p>Read by Gemini and checked against the payment. A receipt that doesn't match never auto-approves.</p></div></div>
         </div>
       </div>
     </section>
@@ -180,6 +233,26 @@
       </div>
     </section>
 
+    <!-- Usage -->
+    <section id="usage" class="section section-alt">
+      <div class="wrap">
+        <p class="eyebrow">Who it's for</p>
+        <h2>Built for anyone who has to say yes or no to a payment.</h2>
+        <div class="users">
+          <div class="user"><h3>Card issuers and banks</h3><p>Card payments and wires in the grey zone, where both mistakes are costly: declining a genuine customer or letting fraud through.</p></div>
+          <div class="user"><h3>Neobanks and wallets</h3><p>Customers who already live in chat apps, and a small fraud team that can't review every alert.</p></div>
+          <div class="user"><h3>Payment processors</h3><p>One API in front of many merchants, with a separate workspace, policy and audit log for each client.</p></div>
+        </div>
+        <h3 class="usage-title">How a bank uses it</h3>
+        <ol class="usage">
+          <li><span class="usage-n" aria-hidden="true">1</span><div><strong>Connect</strong><p>Create an API key in the Console and send each payment to <code>POST /v1/evaluations</code>, with the cardholder's phone if they can be asked.</p></div></li>
+          <li><span class="usage-n" aria-hidden="true">2</span><div><strong>Set the policy</strong><p>Choose the approve and block thresholds, the minimum amount worth a subpoena and the channels allowed, then replay past cases in the simulator before publishing.</p></div></li>
+          <li><span class="usage-n" aria-hidden="true">3</span><div><strong>Receive decisions</strong><p>Clear cases come back in the response. Courtroom cases post a signed webhook, or go to Slack, Pub/Sub or BigQuery.</p></div></li>
+          <li><span class="usage-n" aria-hidden="true">4</span><div><strong>Work the queue</strong><p>Analysts watch cases live, read the transcript, review escalations and override with a reason. The Overview shows the customer impact.</p></div></li>
+        </ol>
+      </div>
+    </section>
+
     <!-- Developers -->
     <section id="developers" class="section">
       <div class="wrap split">
@@ -195,9 +268,9 @@
           </ul>
           <a class="btn" href="__CONSOLE_URL__/playground">Try it in the Playground <span aria-hidden="true">→</span></a>
         </div>
-        <div class="code" aria-label="Example request and response">
+        <div class="code" role="group" aria-label="Example request and response">
           <div class="code-tabs"><span class="on">Request</span></div>
-<pre><span class="c-m">curl</span> -X POST $API/v1/evaluations \
+<pre tabindex="0"><span class="c-m">curl</span> -X POST $API/v1/evaluations \
   -H <span class="c-s">"Authorization: Bearer $SUBPOENA_API_KEY"</span> \
   -H <span class="c-s">"Idempotency-Key: 6f1c…"</span> \
   -d <span class="c-s">'{
@@ -209,7 +282,7 @@
                  "allowed_channels": ["WHATSAPP", "VOICE"] }
   }'</span></pre>
           <div class="code-tabs"><span class="on">202 Accepted</span></div>
-<pre>{
+<pre tabindex="0">{
   <span class="c-k">"evaluation_id"</span>: <span class="c-s">"eval_2scx8999p8kwf7e4"</span>,
   <span class="c-k">"status"</span>: <span class="c-s">"AWAITING_TESTIMONY"</span>,
   <span class="c-k">"p_fraud"</span>: <span class="c-n">0.5</span>,
