@@ -167,3 +167,35 @@ p { margin: 0; }
 .footer-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 24px; font-size: 14px; color: var(--muted); }
 .footer-inner a { margin-left: auto; font-weight: 600; color: var(--ink); text-decoration: none; }
 .footer-inner .brand { color: var(--ink); }
+
+/* Courtroom graph */
+.graph { margin: 40px 0 0; background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 18px 50px rgba(18, 28, 45, 0.08); }
+.graph-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+.graph-title { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.graph-title .live { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #14b053; box-shadow: 0 0 0 4px rgba(20, 176, 83, 0.15); }
+.graph-replay { flex: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-2); background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.graph-replay:hover { border-color: #c1c4cf; color: var(--ink); }
+.graph-replay:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.graph-scroll { overflow-x: auto; background: #fbfbfc radial-gradient(#e6e8ee 1px, transparent 1px) 0 0 / 20px 20px; }
+.graph svg { display: block; width: 100%; min-width: 760px; height: auto; font-family: Inter, system-ui, sans-serif; }
+.graph-caption { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--line); font-size: 15px; font-weight: 500; color: var(--ink); min-height: 52px; }
+.graph-caption::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--c, #606b85); transition: background 0.25s; }
+
+.graph .edge { fill: none; stroke: #e1e3ea; stroke-width: 1.4; transition: stroke 0.3s; }
+.graph .edge.seen { stroke: #a3abbc; }
+.graph .edge.on { stroke: var(--c); stroke-width: 2.6; stroke-dasharray: 6 5; animation: flow 0.6s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -11; } }
+
+.graph .node .box { fill: #f4f4f6; stroke: #e1e3ea; stroke-width: 2; transition: fill 0.3s, stroke 0.3s; }
+.graph .node .glow { fill: var(--c); opacity: 0; transition: opacity 0.3s; }
+.graph .node .dot { fill: #c1c4cf; transition: fill 0.3s; }
+.graph .node .label { font-size: 14px; font-weight: 700; fill: #121c2d; }
+.graph .node .role { font-size: 11.5px; fill: #606b85; }
+.graph .node .count { font-size: 12px; font-weight: 600; fill: #606b85; }
+.graph .node { opacity: 0.6; transition: opacity 0.3s; }
+.graph .node.seen { opacity: 1; }
+.graph .node.seen .box { fill: #fff; stroke: color-mix(in srgb, var(--c) 45%, #fff); }
+.graph .node.seen .dot { fill: var(--c); }
+.graph .node.active .box { stroke: var(--c); }
+.graph .node.active .glow { opacity: 0.14; }
+@media (prefers-reduced-motion: reduce) { .graph .edge.on { animation: none; stroke-dasharray: none; } }
