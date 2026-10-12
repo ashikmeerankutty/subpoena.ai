@@ -7,6 +7,7 @@ import { Text } from "@twilio-paste/core/text";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { RowAction } from "@/components/RowAction";
 import { SendTestEvent } from "@/components/SendTestEvent";
 import { PageHeader, Panel } from "@/components/Shell";
 import { PFraud, StatusBadge } from "@/components/StatusBadge";
@@ -48,7 +49,7 @@ export default function CasesPage() {
           <TBody>
             {rows.map((e) => (
               <Tr key={e.evaluation_id} onClick={() => router.push(`/cases/${e.evaluation_id}`)}>
-                <Td><code>{e.evaluation_id}</code></Td>
+                <Td><RowAction href={`/cases/${e.evaluation_id}`} label={`Open case ${e.evaluation_id}`}><code>{e.evaluation_id}</code></RowAction></Td>
                 <Td><code>{e.transaction_id}</code></Td>
                 <Td>{e.user_id}</Td>
                 <Td textAlign="right">{money(e.amount, e.currency)}</Td>

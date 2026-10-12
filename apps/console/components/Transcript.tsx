@@ -43,7 +43,7 @@ function Details({ summary, value }: { summary: string; value: unknown }) {
   return (
     <details style={{ marginTop: 4 }}>
       <summary style={{ cursor: "pointer", fontSize: 12, color: "#606b85" }}>{summary}</summary>
-      <pre style={{ fontSize: 11, background: "#f4f4f6", padding: 8, borderRadius: 6, overflow: "auto", maxHeight: 220 }}>
+      <pre tabIndex={0} style={{ fontSize: 11, background: "#f4f4f6", padding: 8, borderRadius: 6, overflow: "auto", maxHeight: 220 }}>
         {JSON.stringify(value, null, 2)}
       </pre>
     </details>
@@ -137,15 +137,16 @@ export function Transcript({ events, findings, follow }: { events: PipelineEvent
     if (follow && el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [events.length, follow]);
   return (
-    <div ref={box} style={{ maxHeight: 640, overflowY: "auto", paddingRight: 8 }}>
+    <div ref={box} role="log" aria-live="polite" aria-label="Courtroom transcript" tabIndex={0}
+      style={{ maxHeight: 640, overflowY: "auto", paddingRight: 8 }}>
       {events.map((e) => {
         const meta = AGENTS[e.from_agent];
         const struck = e.type === "CLAIM_STRUCK";
         return (
           <Box key={e.event_id} display="flex" columnGap="space40" marginBottom="space50">
             <Box flexShrink={0} width="sizeSquare80" height="sizeSquare80" borderRadius="borderRadiusCircle"
-              display="flex" alignItems="center" justifyContent="center"
-              style={{ background: `${meta.color}18`, color: meta.color, fontWeight: 700, fontSize: 13 }}>
+              display="flex" alignItems="center" justifyContent="center" aria-hidden="true"
+              style={{ background: `${meta.color}10`, color: meta.color, fontWeight: 700, fontSize: 13 }}>
               {meta.label.slice(0, 2)}
             </Box>
             <Box flexGrow={1} minWidth="0px" opacity={struck ? "0.75" : undefined}>
@@ -153,7 +154,7 @@ export function Transcript({ events, findings, follow }: { events: PipelineEvent
                 <Text as="span" fontWeight="fontWeightSemibold" style={{ color: meta.color }}>{meta.label}</Text>
                 {e.to_agent ? <Text as="span" fontSize="fontSize20" color="colorTextWeak">→ {AGENTS[e.to_agent].label}</Text> : null}
                 <Text as="span" fontSize="fontSize10" color="colorTextWeak" fontWeight="fontWeightSemibold" letterSpacing="wider">{e.type}</Text>
-                <Text as="span" fontSize="fontSize10" color="colorTextWeaker" marginLeft="auto">
+                <Text as="span" fontSize="fontSize10" color="colorTextWeak" marginLeft="auto">
                   #{e.sequence} · {time(e.created_at)}
                   {e.model ? ` · ${e.model}` : ""}
                   {e.tokens ? ` · ${e.tokens.input}+${e.tokens.output} tok` : ""}

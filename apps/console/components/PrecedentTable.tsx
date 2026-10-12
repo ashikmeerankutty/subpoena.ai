@@ -16,7 +16,7 @@ export function PrecedentTable({ rows, onRemove }: { rows: Precedent[]; onRemove
   const searched = rows.some((p) => p.similarity != null);
   return (
     <Table>
-      <THead><Tr>{searched ? <Th>Similarity</Th> : null}<Th>Precedent</Th><Th>Ruling</Th><Th>Source</Th><Th>Case</Th>{onRemove ? <Th /> : null}</Tr></THead>
+      <THead><Tr>{searched ? <Th>Similarity</Th> : null}<Th>Precedent</Th><Th>Ruling</Th><Th>Source</Th><Th>Case</Th>{onRemove ? <Th><span className="sr-only">Actions</span></Th> : null}</Tr></THead>
       <TBody>
         {rows.map((p) => (
           <Tr key={p.id}>

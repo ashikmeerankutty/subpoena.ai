@@ -9,6 +9,7 @@ import { Text } from "@twilio-paste/core/text";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { RowAction } from "@/components/RowAction";
 import { Drawer } from "@/components/Drawer";
 import { JsonView } from "@/components/JsonView";
 import { SendTestEvent } from "@/components/SendTestEvent";
@@ -56,7 +57,7 @@ export default function TransactionsPage() {
             {rows.map((e) => (
               <Tr key={e.evaluation_id} onClick={() => setOpen(e)}>
                 <Td><Text as="span" fontSize="fontSize20" color="colorTextWeak">{time(e.created_at)}</Text></Td>
-                <Td><code>{e.transaction_id}</code></Td>
+                <Td><RowAction onClick={() => setOpen(e)} label={`Open transaction ${e.transaction_id}`}><code>{e.transaction_id}</code></RowAction></Td>
                 <Td>{e.user_id}</Td>
                 <Td textAlign="right">{money(e.amount, e.currency)}</Td>
                 <Td>{e.merchant}</Td>

@@ -8,6 +8,7 @@ import { Text } from "@twilio-paste/core/text";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { RowAction } from "@/components/RowAction";
 import { Drawer } from "@/components/Drawer";
 import { PageHeader, Panel, useMe } from "@/components/Shell";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -43,7 +44,7 @@ export default function SubpoenasPage() {
               return (
                 <Tr key={s.id} onClick={() => setOpenId(s.id)}>
                   <Td><Text as="span" fontSize="fontSize20" color="colorTextWeak">{ago(s.sent_at)}</Text></Td>
-                  <Td>{s.user_id}<br /><Text as="span" fontSize="fontSize20" color="colorTextWeak">{s.phone}</Text></Td>
+                  <Td><RowAction onClick={() => setOpenId(s.id)} label={`Open subpoena for ${s.user_id}`}>{s.user_id}</RowAction><br /><Text as="span" fontSize="fontSize20" color="colorTextWeak">{s.phone}</Text></Td>
                   <Td>{channelName(s.channel)}</Td>
                   <Td><Text as="span" fontSize="fontSize20">{s.question}</Text></Td>
                   <Td><Badge as="span" size="small" variant={variant}>{label}</Badge></Td>

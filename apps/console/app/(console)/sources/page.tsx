@@ -71,7 +71,7 @@ export default function SourcesPage() {
       </Panel>
       <Panel title="API keys">
         <Table>
-          <THead><Tr><Th>Name</Th><Th>Key</Th><Th>Scopes</Th><Th>Created</Th><Th>Last used</Th><Th>Status</Th><Th /></Tr></THead>
+          <THead><Tr><Th>Name</Th><Th>Key</Th><Th>Scopes</Th><Th>Created</Th><Th>Last used</Th><Th>Status</Th><Th><span className="sr-only">Actions</span></Th></Tr></THead>
           <TBody>
             {(data?.api_keys ?? []).map((k) => (
               <Tr key={k.id}>

@@ -80,7 +80,17 @@ export function TrendChart({ series, hours, bucketMinutes = 60 }: { series: Reco
       <Box position="relative">
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" style={{ display: "block", overflow: "visible" }}
           aria-label={`Evaluations by verdict: ${SERIES.map(({ key, label: n }) => `${totals[key]} ${n.toLowerCase()}`).join(", ")}`}
-          onMouseLeave={() => setHover(null)}>
+          onMouseLeave={() => setHover(null)}
+          // Keyboard: focus the chart, then Left/Right walk the bars and show the same tooltip.
+          tabIndex={0} className="chart-bar"
+          onFocus={() => setHover((v) => v ?? Math.max(0, buckets.findLastIndex((b) => b.total > 0)))}
+          onBlur={() => setHover(null)}
+          onKeyDown={(e) => {
+            const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+            if (!d) return;
+            e.preventDefault();
+            setHover((v) => Math.min(buckets.length - 1, Math.max(0, (v ?? 0) + d)));
+          }}>
           {ticks.map((v) => (
             <g key={v}>
               <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke={GRID} strokeWidth={1} strokeDasharray={v === 0 ? undefined : "2 4"} />
@@ -117,7 +127,7 @@ export function TrendChart({ series, hours, bucketMinutes = 60 }: { series: Reco
         </svg>
 
         {h && hover != null ? (
-          <div role="tooltip" style={{
+          <div role="tooltip" aria-live="polite" style={{
             position: "absolute", top: 0, pointerEvents: "none", minWidth: 150,
             left: `${((L + slot * hover + slot / 2) / W) * 100}%`,
             transform: `translateX(${hover > buckets.length / 2 ? "calc(-100% - 12px)" : "12px"})`,
@@ -138,6 +148,18 @@ export function TrendChart({ series, hours, bucketMinutes = 60 }: { series: Reco
           </div>
         ) : null}
       </Box>
+      <table className="sr-only">
+        <caption>Evaluations by verdict, per {bucketMinutes >= 60 ? `${bucketMinutes / 60} hour` : `${bucketMinutes} minutes`}</caption>
+        <thead><tr><th scope="col">Time</th>{SERIES.map(({ key, label: n }) => <th key={key} scope="col">{n}</th>)}</tr></thead>
+        <tbody>
+          {buckets.filter((b) => b.total > 0).map((b) => (
+            <tr key={b.t}>
+              <th scope="row">{new Date(b.t).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })}</th>
+              {SERIES.map(({ key }) => <td key={key}>{b.counts[key]}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
       {all === 0 ? <Text as="p" color="colorTextWeak" marginTop="space30">No evaluations in this window yet.</Text> : null}
     </Box>
   );

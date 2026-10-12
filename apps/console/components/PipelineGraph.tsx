@@ -101,14 +101,25 @@ export function PipelineGraph({ events, selected, onSelect }: {
     return () => ro.disconnect();
   }, []);
   return (
-    <div ref={box} style={{ height: 470, border: "1px solid #e1e3ea", borderRadius: 8, background: "#fbfbfc" }}>
+    <>
+    {/* The canvas is mouse-first; this list gives keyboard and screen-reader users the same agent filter. */}
+    <div className="sr-only-focusable" role="group" aria-label="Filter the transcript by agent">
+      {(Object.keys(POS) as AgentName[]).map((agent) => (
+        <button key={agent} type="button" aria-pressed={selected === agent}
+          onClick={() => onSelect(selected === agent ? null : agent)}>
+          {AGENTS[agent].label}: {counts[agent] ?? 0} {(counts[agent] ?? 0) === 1 ? "event" : "events"}{last?.from_agent === agent ? ", speaking now" : ""}
+        </button>
+      ))}
+    </div>
+    <div ref={box} aria-hidden="true" style={{ height: 470, border: "1px solid #e1e3ea", borderRadius: 8, background: "#fbfbfc" }}>
       {visible ? <ReactFlow nodes={nodes} edges={edges} nodeTypes={NODE_TYPES} fitView
         fitViewOptions={{ padding: 0.08 }}
-        onInit={(rf) => { setTimeout(() => rf.fitView({ padding: 0.08 }), 60); }} nodesConnectable={false} panOnScroll zoomOnScroll={false}
+        onInit={(rf) => { setTimeout(() => rf.fitView({ padding: 0.08 }), 60); }} nodesConnectable={false} nodesFocusable={false} edgesFocusable={false} panOnScroll zoomOnScroll={false}
         onNodeClick={(_, n) => onSelect(selected === n.id ? null : (n.id as AgentName))}
         proOptions={{ hideAttribution: true }}>
         <Background gap={20} color="#eceef2" />
       </ReactFlow> : null}
     </div>
+    </>
   );
 }

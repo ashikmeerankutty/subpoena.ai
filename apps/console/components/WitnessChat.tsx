@@ -72,7 +72,7 @@ export function WitnessChat({ phone, simulator }: { phone: string; simulator: bo
         <Text as="div" color="colorTextInverse" fontWeight="fontWeightSemibold">{phone}</Text>
         <Text as="div" color="colorTextInverseWeak" fontSize="fontSize20">WhatsApp, SMS and calls{simulator ? " · simulator" : ""}</Text>
       </Box>
-      <div ref={box} style={{ background: "#efeae2", maxHeight: 420, overflowY: "auto", padding: 20 }}>
+      <div ref={box} role="region" aria-label={`Conversation with ${phone}`} tabIndex={0} style={{ background: "#f3f0ea", maxHeight: 420, overflowY: "auto", padding: 20 }}>
         <ChatLog>
           {msgs.map((m) => (
             <ChatMessage key={m.id} variant={m.direction === "INBOUND" ? "outbound" : "inbound"}>

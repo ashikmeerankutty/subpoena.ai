@@ -25,7 +25,7 @@ interface Result {
 }
 interface HistoryItem { method: Method; path: string; body: string | null; status: number; ms: number; at: number }
 
-const METHOD_COLOR: Record<Method, string> = { GET: "#0263e0", POST: "#1a9e55", PATCH: "#c25700", DELETE: "#cf2d4f" };
+const METHOD_COLOR: Record<Method, string> = { GET: "#0263e0", POST: "#0b7a39", PATCH: "#a84b00", DELETE: "#cf2d4f" };
 const HISTORY_KEY = "playground.history";
 
 const store = {
@@ -350,14 +350,14 @@ export default function PlaygroundPage() {
                           {e.data.latency_ms != null ? <span className="pg-muted">{Math.round(e.data.latency_ms)} ms</span> : <span />}
                         </button>
                         {open === e.data.event_id ? (
-                          <pre className="pg-code" dangerouslySetInnerHTML={{ __html: highlight(JSON.stringify(e.data.payload, null, 2)) }} />
+                          <pre tabIndex={0} className="pg-code" dangerouslySetInnerHTML={{ __html: highlight(JSON.stringify(e.data.payload, null, 2)) }} />
                         ) : null}
                       </div>
                     ) : e.type === "end" ? <div key={`end-${i}`} className="pg-end">Stream ended</div> : null)}
                   </div>
                 ) : (
                   <div className="pg-output-wrap" ref={out}>
-                    <pre className="pg-code pg-output" dangerouslySetInnerHTML={{
+                    <pre tabIndex={0} className="pg-code pg-output" dangerouslySetInnerHTML={{
                       __html: result.json != null ? highlight(JSON.stringify(result.json, null, 2)) : highlight(result.text || "(empty body)"),
                     }} />
                   </div>

@@ -136,7 +136,7 @@ export default function DestinationsPage() {
 
       <Panel title={`${rows.length} destination${rows.length === 1 ? "" : "s"}`}>
         <Table>
-          <THead><Tr><Th>Destination</Th><Th>Events</Th><Th>Deliveries</Th><Th>Failure rate</Th><Th>Last delivery</Th><Th>Enabled</Th><Th /></Tr></THead>
+          <THead><Tr><Th>Destination</Th><Th>Events</Th><Th>Deliveries</Th><Th>Failure rate</Th><Th>Last delivery</Th><Th>Enabled</Th><Th><span className="sr-only">Actions</span></Th></Tr></THead>
           <TBody>
             {rows.map((d) => (
               <Tr key={d.id}>

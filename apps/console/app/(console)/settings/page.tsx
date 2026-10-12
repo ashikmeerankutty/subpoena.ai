@@ -92,7 +92,7 @@ export default function SettingsPage() {
           <Alert variant="neutral"><Text as="span">Only workspace admins can manage members.</Text></Alert>
         ) : (
           <Table>
-            <THead><Tr><Th>Member</Th><Th>Role</Th><Th>Added by</Th><Th>Last sign-in</Th><Th /></Tr></THead>
+            <THead><Tr><Th>Member</Th><Th>Role</Th><Th>Added by</Th><Th>Last sign-in</Th><Th><span className="sr-only">Actions</span></Th></Tr></THead>
             <TBody>
               {(members?.data ?? []).map((m) => (
                 <Tr key={m.id}>

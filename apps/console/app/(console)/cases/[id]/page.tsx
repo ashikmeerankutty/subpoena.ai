@@ -114,13 +114,13 @@ export default function CasePage() {
       {ev.explanation ? (
         <Box marginBottom="space60">
           <Callout variant={ev.verdict === "BLOCK" ? "error" : ev.verdict === "APPROVE" ? "success" : "warning"}>
-            <CalloutHeading as="h3">Stenographer</CalloutHeading>
+            <CalloutHeading as="h2">Stenographer</CalloutHeading>
             <CalloutText>{ev.explanation}</CalloutText>
           </Callout>
         </Box>
       ) : null}
       {ev.override ? (
-        <Box marginBottom="space60"><Callout variant="neutral"><CalloutHeading as="h3">Overridden by {ev.override.by}</CalloutHeading>
+        <Box marginBottom="space60"><Callout variant="neutral"><CalloutHeading as="h2">Overridden by {ev.override.by}</CalloutHeading>
           <CalloutText>{ev.override.previous_verdict} → {ev.override.verdict}: {ev.override.reason}</CalloutText></Callout></Box>
       ) : null}
 

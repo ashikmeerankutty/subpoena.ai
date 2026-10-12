@@ -106,6 +106,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </SidebarBody>
       </Sidebar>
       <SidebarPushContentWrapper variant="default">
+        <Box as="header">
         <Topbar id={IDS.top}>
           <TopbarActions justify="start">
             <Box display="flex" alignItems="center" columnGap="space30">
@@ -135,6 +136,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Avatar size="sizeIcon70" name={me?.principal?.name ?? me?.key.name ?? "?"} />
           </TopbarActions>
         </Topbar>
+        </Box>
         <Box as="main" id={IDS.main} padding="space90" backgroundColor="colorBackground" minHeight="100vh">
           {children}
         </Box>

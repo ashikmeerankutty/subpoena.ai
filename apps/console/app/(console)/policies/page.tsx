@@ -84,7 +84,8 @@ export default function PoliciesPage() {
             {num("Tier 0: exit block ≥", ["tier0", "block_min"], draft.tier0.block_min)}
           </Box>
           <Box marginTop="space50">
-            <svg viewBox="0 0 400 28" width="100%" aria-label="Outcome bands">
+            <svg viewBox="0 0 400 28" width="100%" role="img"
+              aria-label={`Outcome bands: approve up to ${draft.thresholds.approve_max}, subpoena or escalate up to ${draft.thresholds.block_min}, block above`}>
               <rect x="0" y="4" width={400 * draft.thresholds.approve_max} height="16" fill="#14b053" />
               <rect x={400 * draft.thresholds.approve_max} y="4" width={400 * (draft.thresholds.block_min - draft.thresholds.approve_max)} height="16" fill="#6d2ed1" />
               <rect x={400 * draft.thresholds.block_min} y="4" width={400 * (1 - draft.thresholds.block_min)} height="16" fill="#d61f1f" />
