@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "Agent": {
+      "enum": [
+        "system",
+        "clerk",
+        "geo",
+        "device",
+        "velocity",
+        "merchant",
+        "graph",
+        "prosecutor",
+        "defense",
+        "judge",
+        "bailiff",
+        "stenographer",
+        "witness",
+        "analyst"
+      ],
+      "title": "Agent",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        "INFO",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ],
+      "title": "Severity",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "Citable finding ID, e.g. F2",
+      "pattern": "^F\\d+$",
+      "title": "Id",
+      "type": "string"
+    },
+    "agent": {
+      "$ref": "#/$defs/Agent"
+    },
+    "type": {
+      "description": "Machine-readable signal, e.g. NEW_DEVICE, AMOUNT_SPIKE",
+      "title": "Type",
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "supports": {
+      "pattern": "^(FRAUD|LEGIT|NEUTRAL)$",
+      "title": "Supports",
+      "type": "string"
+    },
+    "detail": {
+      "title": "Detail",
+      "type": "string"
+    },
+    "source_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "MCP resource/tool that produced it",
+      "title": "Source Ref"
+    }
+  },
+  "required": [
+    "id",
+    "agent",
+    "type",
+    "severity",
+    "supports",
+    "detail"
+  ],
+  "title": "EvidenceFinding",
+  "type": "object"
+}

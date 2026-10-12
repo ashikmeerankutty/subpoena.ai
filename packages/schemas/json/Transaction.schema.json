@@ -1,0 +1,145 @@
+{
+  "$defs": {
+    "Merchant": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "mcc": {
+          "description": "ISO 18245 merchant category code",
+          "pattern": "^\\d{4}$",
+          "title": "Mcc",
+          "type": "string"
+        },
+        "country": {
+          "description": "ISO 3166-1 alpha-2",
+          "pattern": "^[A-Z]{2}$",
+          "title": "Country",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "mcc",
+        "country"
+      ],
+      "title": "Merchant",
+      "type": "object"
+    },
+    "TransactionMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "ip_address": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ip Address"
+        },
+        "device_fingerprint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device Fingerprint"
+        },
+        "user_agent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "User Agent"
+        }
+      },
+      "title": "TransactionMetadata",
+      "type": "object"
+    },
+    "TransactionType": {
+      "enum": [
+        "CARD_PRESENT",
+        "CARD_NOT_PRESENT",
+        "P2P",
+        "WIRE",
+        "ACH"
+      ],
+      "title": "TransactionType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "transaction_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Transaction Id",
+      "type": "string"
+    },
+    "user_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "User Id",
+      "type": "string"
+    },
+    "amount": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "title": "Amount"
+    },
+    "currency": {
+      "pattern": "^[A-Z]{3}$",
+      "title": "Currency",
+      "type": "string"
+    },
+    "type": {
+      "$ref": "#/$defs/TransactionType"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "merchant": {
+      "$ref": "#/$defs/Merchant"
+    },
+    "metadata": {
+      "$ref": "#/$defs/TransactionMetadata"
+    }
+  },
+  "required": [
+    "transaction_id",
+    "user_id",
+    "amount",
+    "currency",
+    "type",
+    "occurred_at",
+    "merchant"
+  ],
+  "title": "Transaction",
+  "type": "object"
+}

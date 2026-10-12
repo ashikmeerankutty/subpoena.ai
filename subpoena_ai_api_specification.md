@@ -212,6 +212,10 @@ The Judge outputs a single calibrated probability of fraud, `p_fraud ∈ [0, 1]`
 
 Every value of `p_fraud` maps to exactly one outcome.
 
+While a case is **ESCALATE**d the transaction is held (`verdict: HOLD`, `status: ESCALATED`) until an analyst rules. "BLOCK + ESCALATE" means `verdict: BLOCK`, `status: ESCALATED`.
+
+**Tier 0 routing** uses its own per-policy cut-offs on the pre-screen score (defaults: `score ≤ 0.30` → exit APPROVE, `score ≥ 0.97` → exit BLOCK, otherwise → courtroom); hard-rule hits always exit BLOCK.
+
 **After testimony**
 - Witness authentication **fails** → **BLOCK** + **ESCALATE** (likely account takeover).
 - Witness says "not me" → **BLOCK** + notify bank to start card reissue.
@@ -575,7 +579,7 @@ subpoena.ai/
 
 ## 18. Open Decisions
 
-Defaults chosen in this spec; open to change:
+Defaults chosen in this spec; open to change. What the hackathon build actually chose (and every deviation from this spec) is recorded in [`docs/decisions.md`](./docs/decisions.md).
 
 | Decision | Default | Alternatives |
 | :--- | :--- | :--- |

@@ -1,0 +1,562 @@
+{
+  "$defs": {
+    "Agent": {
+      "enum": [
+        "system",
+        "clerk",
+        "geo",
+        "device",
+        "velocity",
+        "merchant",
+        "graph",
+        "prosecutor",
+        "defense",
+        "judge",
+        "bailiff",
+        "stenographer",
+        "witness",
+        "analyst"
+      ],
+      "title": "Agent",
+      "type": "string"
+    },
+    "Channel": {
+      "enum": [
+        "WHATSAPP",
+        "SMS",
+        "VOICE",
+        "PUSH"
+      ],
+      "title": "Channel",
+      "type": "string"
+    },
+    "DebateSummaryItem": {
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "$ref": "#/$defs/Agent"
+        },
+        "position": {
+          "$ref": "#/$defs/Verdict"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent",
+        "position",
+        "summary"
+      ],
+      "title": "DebateSummaryItem",
+      "type": "object"
+    },
+    "EvaluationStatus": {
+      "enum": [
+        "RECEIVED",
+        "IN_DEBATE",
+        "AWAITING_TESTIMONY",
+        "RULED",
+        "ESCALATED",
+        "APPEALED"
+      ],
+      "title": "EvaluationStatus",
+      "type": "string"
+    },
+    "EvidenceFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Citable finding ID, e.g. F2",
+          "pattern": "^F\\d+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "agent": {
+          "$ref": "#/$defs/Agent"
+        },
+        "type": {
+          "description": "Machine-readable signal, e.g. NEW_DEVICE, AMOUNT_SPIKE",
+          "title": "Type",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "supports": {
+          "pattern": "^(FRAUD|LEGIT|NEUTRAL)$",
+          "title": "Supports",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "source_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MCP resource/tool that produced it",
+          "title": "Source Ref"
+        }
+      },
+      "required": [
+        "id",
+        "agent",
+        "type",
+        "severity",
+        "supports",
+        "detail"
+      ],
+      "title": "EvidenceFinding",
+      "type": "object"
+    },
+    "Links": {
+      "additionalProperties": false,
+      "properties": {
+        "self": {
+          "title": "Self",
+          "type": "string"
+        },
+        "events": {
+          "title": "Events",
+          "type": "string"
+        }
+      },
+      "required": [
+        "self",
+        "events"
+      ],
+      "title": "Links",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "INFO",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SubpoenaRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "channel": {
+          "$ref": "#/$defs/Channel"
+        },
+        "sent_at": {
+          "format": "date-time",
+          "title": "Sent At",
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "channel",
+        "sent_at",
+        "expires_at"
+      ],
+      "title": "SubpoenaRef",
+      "type": "object"
+    },
+    "Testimony": {
+      "additionalProperties": false,
+      "properties": {
+        "subpoena_id": {
+          "title": "Subpoena Id",
+          "type": "string"
+        },
+        "raw_text": {
+          "description": "Redacted; untrusted content",
+          "title": "Raw Text",
+          "type": "string"
+        },
+        "claims": {
+          "$ref": "#/$defs/TestimonyClaims"
+        },
+        "media_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Media Refs",
+          "type": "array"
+        },
+        "witness_auth_result": {
+          "$ref": "#/$defs/WitnessAuthResult"
+        },
+        "flagged_by_screening": {
+          "default": false,
+          "title": "Flagged By Screening",
+          "type": "boolean"
+        },
+        "screening_reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Screening Reasons",
+          "type": "array"
+        },
+        "received_at": {
+          "format": "date-time",
+          "title": "Received At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "subpoena_id",
+        "raw_text",
+        "claims",
+        "witness_auth_result",
+        "received_at"
+      ],
+      "title": "Testimony",
+      "type": "object"
+    },
+    "TestimonyClaims": {
+      "description": "Structured output of the tool-less extractor. Never contains instructions.",
+      "properties": {
+        "confirms_transaction": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "true if the witness says they made it, false if not, null if unclear",
+          "title": "Confirms Transaction"
+        },
+        "stated_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Why, in the witness's words",
+          "title": "Stated Reason"
+        },
+        "mentions_travel": {
+          "default": false,
+          "title": "Mentions Travel",
+          "type": "boolean"
+        },
+        "sentiment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "calm, anxious, angry, ...",
+          "title": "Sentiment"
+        }
+      },
+      "required": [
+        "confirms_transaction"
+      ],
+      "title": "TestimonyClaims",
+      "type": "object"
+    },
+    "Tier0Result": {
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        },
+        "route": {
+          "$ref": "#/$defs/Tier0Route"
+        },
+        "rules_hit": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Rules Hit",
+          "type": "array"
+        },
+        "signals": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Signals",
+          "type": "object"
+        },
+        "latency_ms": {
+          "minimum": 0,
+          "title": "Latency Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "score",
+        "route",
+        "latency_ms"
+      ],
+      "title": "Tier0Result",
+      "type": "object"
+    },
+    "Tier0Route": {
+      "enum": [
+        "EXIT_APPROVE",
+        "EXIT_BLOCK",
+        "COURT"
+      ],
+      "title": "Tier0Route",
+      "type": "string"
+    },
+    "Verdict": {
+      "enum": [
+        "APPROVE",
+        "BLOCK",
+        "HOLD"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    },
+    "WitnessAuthResult": {
+      "enum": [
+        "PASSED",
+        "FAILED",
+        "SKIPPED_BY_POLICY"
+      ],
+      "title": "WitnessAuthResult",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Public shape of an evaluation (drops internal fields such as workspace_id).",
+  "properties": {
+    "evaluation_id": {
+      "title": "Evaluation Id",
+      "type": "string"
+    },
+    "transaction_id": {
+      "title": "Transaction Id",
+      "type": "string"
+    },
+    "user_id": {
+      "title": "User Id",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/EvaluationStatus"
+    },
+    "p_fraud": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "P Fraud"
+    },
+    "verdict": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Verdict"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "rationale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rationale"
+    },
+    "explanation": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Explanation"
+    },
+    "policy_version": {
+      "title": "Policy Version",
+      "type": "integer"
+    },
+    "tier0": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Tier0Result"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/EvidenceFinding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "debate_summary": {
+      "items": {
+        "$ref": "#/$defs/DebateSummaryItem"
+      },
+      "title": "Debate Summary",
+      "type": "array"
+    },
+    "subpoena": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SubpoenaRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "testimony": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Testimony"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "ruled_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ruled At"
+    },
+    "cost_usd": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cost Usd"
+    },
+    "tokens": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tokens"
+    },
+    "override": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Override"
+    },
+    "amount": {
+      "title": "Amount",
+      "type": "string"
+    },
+    "currency": {
+      "title": "Currency",
+      "type": "string"
+    },
+    "merchant": {
+      "title": "Merchant",
+      "type": "string"
+    },
+    "links": {
+      "$ref": "#/$defs/Links"
+    }
+  },
+  "required": [
+    "evaluation_id",
+    "transaction_id",
+    "user_id",
+    "status",
+    "p_fraud",
+    "verdict",
+    "policy_version",
+    "created_at",
+    "updated_at",
+    "amount",
+    "currency",
+    "merchant",
+    "links"
+  ],
+  "title": "EvaluationResponse",
+  "type": "object"
+}

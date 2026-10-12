@@ -1,0 +1,6 @@
+.clickable-rows tbody tr { cursor: pointer; }
+.clickable-rows tbody tr:hover td { background: rgba(2, 99, 224, 0.05); }
+code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85em; }
+@keyframes pulse { 0% { opacity: 1 } 50% { opacity: .35 } 100% { opacity: 1 } }
+.live-dot { animation: pulse 1.4s infinite; }
+.react-flow__attribution { display: none; }

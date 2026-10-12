@@ -2,7 +2,7 @@
 
 **Companion to:** [`subpoena_ai_api_specification.md`](../subpoena_ai_api_specification.md)
 **Target Event:** Google Cloud AI Builder Cup
-**Version:** 1.0 · **Last updated:** 2026-10-09
+**Version:** 1.1 · **Last updated:** 2026-10-12 · deviations: [`decisions.md`](./decisions.md)
 
 ---
 
@@ -97,64 +97,64 @@ subpoena.ai/
 ## 5. Milestones
 
 ### M0 — Project Bootstrap
-- [ ] Monorepo scaffold per §3, linting/formatting, CI (lint + unit tests).
-- [ ] Terraform for core GCP resources and service accounts.
+- [x] Monorepo scaffold per §3, linting/formatting, CI (lint + unit tests).
+- [~] Terraform for core GCP resources and service accounts. *(idempotent `infra/gcp/deploy.sh` instead)*
 - [ ] Twilio accounts, sender and template submitted for approval (long lead time — start first).
 
 **Exit criteria:** `terraform apply` creates the demo project; CI is green on an empty build.
 
 ### M1 — Foundation: API & Data
-- [ ] `packages/schemas`: Evaluation, Transaction, PipelineEvent, EvidenceFinding, Subpoena, Testimony.
-- [ ] `apps/api`: `POST /v1/evaluations`, `GET /v1/evaluations/{id}`, `GET /v1/evaluations` (*Spec §8*).
-- [ ] API key auth (hashed keys, prefixes, scopes), `Idempotency-Key`, RFC 9457 errors, cursor pagination.
-- [ ] Tier 0 pre-screen: hard rules + simple score; publish ambiguous cases to Pub/Sub.
-- [ ] `data/seed`: synthetic users, baselines, 90 days of transactions, demo scenarios loaded into BigQuery.
+- [x] `packages/schemas`: Evaluation, Transaction, PipelineEvent, EvidenceFinding, Subpoena, Testimony.
+- [x] `apps/api`: `POST /v1/evaluations`, `GET /v1/evaluations/{id}`, `GET /v1/evaluations` (*Spec §8*).
+- [x] API key auth (hashed keys, prefixes, scopes), `Idempotency-Key`, RFC 9457 errors, cursor pagination.
+- [x] Tier 0 pre-screen: hard rules + simple score; publish ambiguous cases to Pub/Sub. *(publisher interface done; Pub/Sub adapter pending GCP project)*
+- [x] `data/seed`: synthetic users, baselines, 90 days of transactions, demo scenarios loaded into BigQuery. *(generated; BigQuery load pending GCP project)*
 
 **Exit criteria:** a cURL call with a valid key creates an evaluation in Firestore; Tier 0 approves the coffee scenario and routes the auto-parts scenario to Pub/Sub.
 
 ### M2 — Courtroom: Agents & MCP
-- [ ] `apps/mcp-server`: resources and read tools from *Spec §7*, per-agent tool allow-list.
-- [ ] `apps/agents` (ADK): Clerk, Expert Witnesses (parallel), Prosecutor, Defense, Judge, Stenographer with structured outputs.
-- [ ] Debate protocol: rounds, citation rule (struck claims), retry-once-then-escalate (*Spec §4*).
-- [ ] Decision policy from *Spec §5* implemented as a pure function with unit tests over the full `p_fraud` range.
-- [ ] Every agent message written as a `PipelineEvent` to Firestore; OTel span per step.
+- [x] `apps/mcp-server`: resources and read tools from *Spec §7*, per-agent tool allow-list.
+- [x] `apps/agents` (ADK): Clerk, Expert Witnesses (parallel), Prosecutor, Defense, Judge, Stenographer with structured outputs.
+- [x] Debate protocol: rounds, citation rule (struck claims), retry-once-then-escalate (*Spec §4*).
+- [x] Decision policy from *Spec §5* implemented as a pure function with unit tests over the full `p_fraud` range.
+- [x] Every agent message written as a `PipelineEvent` to Firestore. *(OTel spans: not yet)*
 
 **Exit criteria:** the demo deadlock scenario yields `SUBPOENA` with a full event transcript; the clear-fraud scenario yields `BLOCK` without a subpoena.
 
 ### M3 — Subpoena Loop
-- [ ] `issue_subpoena` tool → WhatsApp template, SMS fallback; status callbacks recorded.
-- [ ] Bailiff: Twilio Lookup SIM-swap check + Verify OTP (*Spec §6*).
-- [ ] `POST /v1/webhooks/twilio/inbound` with signature validation → Model Armor → tool-less extractor → `TestimonyClaims`.
-- [ ] Cloud Tasks timeout → `timeout_action`; Judge re-ruling with testimony.
-- [ ] Outbound webhooks to the bank with HMAC signatures and retries.
+- [x] `issue_subpoena` tool → WhatsApp template, SMS fallback; status callbacks recorded.
+- [x] Bailiff: Twilio Lookup SIM-swap check + Verify OTP (*Spec §6*).
+- [x] `POST /v1/webhooks/twilio/inbound` with signature validation → Model Armor → tool-less extractor → `TestimonyClaims`.
+- [x] Cloud Tasks timeout → `timeout_action`; Judge re-ruling with testimony.
+- [x] Outbound webhooks to the bank with HMAC signatures and retries.
 
 **Exit criteria:** end-to-end on a real phone — subpoena received, OTP passed, reply leads to `APPROVE`; SIM-swap scenario leads to `BLOCK + ESCALATE`; an injection attempt in the reply is flagged and has no effect.
 
 ### M4 — Courthouse Console (core)
-- [ ] Next.js app with Twilio Paste, Segment-style shell: sidebar, workspace switcher, tables, detail drawers (*Spec §10*).
-- [ ] Identity Platform login with Google SSO; roles `ADMIN` / `ANALYST` / `VIEWER`.
-- [ ] **Overview** KPI tiles and trends.
-- [ ] **Sources**: API key create/rotate/revoke (secret shown once), integration snippets, ingest health.
-- [ ] **Transactions**: live debugger via Firestore listeners, raw/enriched JSON toggle.
-- [ ] **Cases**: docket table + case detail with findings, timeline, explanation, override.
-- [ ] **Pipeline view**: React Flow agent graph, live transcript, citations, struck claims, per-step tokens/latency, replay.
-- [ ] **Subpoenas**: delivery status, witness-auth result, testimony, mirrored WhatsApp view.
+- [x] Next.js app with Twilio Paste, Segment-style shell: sidebar, workspace switcher, tables, detail drawers (*Spec §10*).
+- [~] Identity Platform login with Google SSO; roles `ADMIN` / `ANALYST` / `VIEWER`. *(API-key login with roles from scopes; see docs/decisions.md)*
+- [x] **Overview** KPI tiles and trends.
+- [x] **Sources**: API key create/rotate/revoke (secret shown once), integration snippets, ingest health.
+- [x] **Transactions**: live debugger via Firestore listeners, raw/enriched JSON toggle.
+- [x] **Cases**: docket table + case detail with findings, timeline, explanation, override.
+- [x] **Pipeline view**: React Flow agent graph, live transcript, citations, struck claims, per-step tokens/latency, replay.
+- [x] **Subpoenas**: delivery status, witness-auth result, testimony, mirrored WhatsApp view.
 
 **Exit criteria:** the full demo (*Spec §17*) can be driven from the Console without touching logs or the terminal.
 
 ### M5 — Stretch & Polish
 - [ ] Destinations (webhook, Slack, Pub/Sub, BigQuery export) with delivery log.
-- [ ] Policies editor with versioning and simulate-against-history.
+- [x] Policies editor with versioning and simulate-against-history.
 - [ ] Precedents library with vector search used by Defense/Judge.
 - [ ] Receipt-photo testimony via Gemini vision.
 - [ ] Voice subpoena via Twilio ConversationRelay.
 - [ ] Audit Log and Settings pages.
 
 ### M6 — Demo Hardening
-- [ ] Scripted demo scenarios with a reset command.
+- [x] Scripted demo scenarios with a reset command. *(`python -m subpoena_agents.demo`; reset = new workspace via `python -m subpoena_api.admin create-workspace`)*
 - [ ] Recorded fallback video of the full flow.
 - [ ] Metrics slide from Overview (*Spec §14*).
-- [ ] Load sanity check at 10 evaluations/s.
+- [x] Load sanity check at 10 evaluations/s. *(150/150 OK on Cloud Run; p50 413 ms end-to-end, Tier 0 compute 0.05 ms)*
 
 ---
 
