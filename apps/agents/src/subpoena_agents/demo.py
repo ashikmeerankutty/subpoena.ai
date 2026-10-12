@@ -8,6 +8,9 @@
 4. clear fraud       -> BLOCK without a subpoena
 5. sanctioned        -> Tier 0 hard rule
 
+With ``--live-phone +91...`` only the auto-parts case runs, and its subpoena goes to that real
+phone (WhatsApp question + Twilio Verify SMS code); answer it from the phone.
+
 Each run uses fresh transaction IDs, so it can be repeated; for a clean Console start a new
 workspace with ``python -m subpoena_api.admin create-workspace``.
 """
@@ -35,8 +38,10 @@ class Demo:
         )
         self.scenarios = {s["name"]: s for s in json.loads(SEED.read_text())}
 
-    def send(self, name: str) -> dict[str, Any]:
+    def send(self, name: str, phone: str | None = None) -> dict[str, Any]:
         req = dict(self.scenarios[name]["request"])
+        if phone:
+            req["witness"] = {**req["witness"], "phone": phone}
         req["transaction_id"] = f"{req['transaction_id']}_{uuid.uuid4().hex[:6]}"
         r = self.http.post("/evaluations", json=req, headers={"Idempotency-Key": str(uuid.uuid4())})
         r.raise_for_status()
@@ -77,12 +82,32 @@ def line(step: str, ev: dict[str, Any], expect: str) -> bool:
     return ok
 
 
+def live(d: Demo, phone: str) -> None:
+    ev = d.wait(
+        d.send("auto_parts_deadlock", phone)["evaluation_id"], FINAL | {"AWAITING_TESTIMONY"}
+    )
+    print(f"  courtroom: {ev['status']} p_fraud={ev['p_fraud']}  {ev['evaluation_id']}")
+    if ev["status"] == "AWAITING_TESTIMONY":
+        print(f"  Subpoena sent to {phone}: answer on WhatsApp and send the SMS code there too.")
+        ev = d.wait(ev["evaluation_id"], FINAL, timeout=900)
+    sub = ev["subpoena"] and d.http.get(f"/subpoenas/{ev['subpoena']['id']}").json()
+    for m in sub["messages"] if sub else []:
+        print(
+            f"    {m['direction']:<8} {m['channel']:<8} {m.get('status') or '':<10} {m['body'][:90]}"
+        )
+    line("auto parts (live witness)", ev, "RULED/APPROVE")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--api", required=True)
     ap.add_argument("--key", required=True)
+    ap.add_argument("--live-phone", help="send the auto-parts subpoena to this real phone")
     a = ap.parse_args()
     d = Demo(a.api, a.key)
+    if a.live_phone:
+        live(d, a.live_phone)
+        return
     results = []
 
     print("1. Clear case")

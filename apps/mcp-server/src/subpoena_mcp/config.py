@@ -21,6 +21,8 @@ class McpSettings(BaseSettings):
 
     witness_channel: Literal["simulator", "twilio"] = "simulator"
     sim_swap_window_days: int = 7
+    # Fail closed when the carrier cannot report SIM-swap status (Twilio trial accounts can't).
+    sim_swap_required: bool = True
     agent_token_secret: SecretStr = SecretStr("dev-only-agent-secret")
 
     twilio_account_sid: str | None = None
@@ -30,3 +32,13 @@ class McpSettings(BaseSettings):
     twilio_whatsapp_content_sid: str | None = None  # approved subpoena template
     twilio_verify_service_sid: str | None = None
     twilio_status_callback_url: str | None = None
+    # Comma-separated E.164 numbers routed to Twilio; empty = all. Others use the simulator,
+    # so seeded demo witnesses keep working next to a real phone.
+    twilio_live_numbers: str = ""
+    # If Twilio rejects a witness message (e.g. no WhatsApp sender yet), deliver it to the
+    # Console phone simulator instead; one-time codes still go through Twilio Verify.
+    twilio_message_fallback: bool = False
+
+    @property
+    def live_numbers(self) -> frozenset[str]:
+        return frozenset(n.strip() for n in self.twilio_live_numbers.split(",") if n.strip())

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 import secrets
 from datetime import timedelta
 from typing import Any, Protocol
@@ -21,6 +22,8 @@ from subpoena_store import Store, Verification
 
 from .config import McpSettings
 from .data import DataSource
+
+log = logging.getLogger(__name__)
 
 CODE_TTL = timedelta(minutes=10)
 MAX_CODE_ATTEMPTS = 3
@@ -68,6 +71,7 @@ class SimulatorChannel:
             "line_type": "mobile",
             "carrier": "Simulated Mobile",
             "last_sim_swap": swapped.isoformat() if swapped else None,
+            "sim_swap_checked": True,
             "source": "simulator",
         }
 
@@ -100,6 +104,12 @@ class SimulatorChannel:
         return {"status": "pending", "attempts": v.attempts}
 
 
+class TwilioError(RuntimeError):
+    def __init__(self, status: int, code: int | None, message: str) -> None:
+        super().__init__(f"Twilio {status} (code {code}): {message}")
+        self.status = status
+
+
 class TwilioChannel:
     """Twilio REST APIs via httpx (no SDK needed for these four calls)."""
 
@@ -114,7 +124,13 @@ class TwilioChannel:
 
     async def _post(self, url: str, data: dict[str, str]) -> dict[str, Any]:
         r = await self._http.post(url, data=data)
-        r.raise_for_status()
+        if r.is_error:
+            try:
+                err = r.json()
+            except ValueError:
+                err = {}
+            # Twilio's own code and message (e.g. 21654 "ContentSid Required") explain failures.
+            raise TwilioError(r.status_code, err.get("code"), err.get("message") or r.text[:200])
         result: dict[str, Any] = r.json()
         return result
 
@@ -166,7 +182,13 @@ class TwilioChannel:
             f"https://lookups.twilio.com/v2/PhoneNumbers/{phone}",
             params={"Fields": "line_type_intelligence,sim_swap"},
         )
-        r.raise_for_status()
+        if r.is_error:
+            return {
+                "phone": phone,
+                "sim_swap_checked": False,
+                "sim_swap_error": r.status_code,
+                "source": "twilio",
+            }
         body = r.json()
         swap = body.get("sim_swap") or {}
         period = (swap.get("last_sim_swap") or {}).get("swapped_period")
@@ -179,6 +201,8 @@ class TwilioChannel:
             "line_type": (body.get("line_type_intelligence") or {}).get("type"),
             "carrier": (body.get("line_type_intelligence") or {}).get("carrier_name"),
             "last_sim_swap": last,
+            # No sim_swap block or an error code means the carrier gave no answer.
+            "sim_swap_checked": bool(swap) and not swap.get("error_code"),
             "sim_swap_error": swap.get("error_code"),
             "source": "twilio",
         }
@@ -198,7 +222,56 @@ class TwilioChannel:
                 f"https://verify.twilio.com/v2/Services/{sid}/VerificationCheck",
                 {"To": phone, "Code": code.strip()},
             )
-        except httpx.HTTPStatusError as exc:
+        except TwilioError as exc:
             # 404 = no pending verification (expired or max attempts)
-            return {"status": "expired" if exc.response.status_code == 404 else "error"}
+            return {"status": "expired" if exc.status == 404 else "error"}
         return {"status": res.get("status")}
+
+
+class RoutedChannel:
+    """Real Twilio for the listed numbers (all when empty), the simulator for everyone else.
+
+    With ``fallback`` a message Twilio rejects is delivered to the simulator instead, so a
+    live witness can still answer from the Console phone while codes arrive by real SMS.
+    """
+
+    def __init__(
+        self,
+        live: frozenset[str],
+        twilio: WitnessChannel,
+        simulator: WitnessChannel,
+        *,
+        fallback: bool = False,
+    ) -> None:
+        self._live = live
+        self._twilio = twilio
+        self._simulator = simulator
+        self._fallback = fallback
+
+    def _is_live(self, phone: str) -> bool:
+        return not self._live or phone in self._live
+
+    def _for(self, phone: str) -> WitnessChannel:
+        return self._twilio if self._is_live(phone) else self._simulator
+
+    async def send_message(
+        self, phone: str, body: str, channel: Channel, *, context: dict[str, Any]
+    ) -> WitnessMessage:
+        if not self._is_live(phone):
+            return await self._simulator.send_message(phone, body, channel, context=context)
+        try:
+            return await self._twilio.send_message(phone, body, channel, context=context)
+        except TwilioError as exc:
+            if not self._fallback:
+                raise
+            log.warning("Twilio rejected %s message, using the simulator: %s", channel, exc)
+            return await self._simulator.send_message(phone, body, channel, context=context)
+
+    async def lookup(self, phone: str) -> dict[str, Any]:
+        return await self._for(phone).lookup(phone)
+
+    async def send_code(self, phone: str, *, context: dict[str, Any]) -> dict[str, Any]:
+        return await self._for(phone).send_code(phone, context=context)
+
+    async def check_code(self, phone: str, code: str) -> dict[str, Any]:
+        return await self._for(phone).check_code(phone, code)

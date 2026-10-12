@@ -47,6 +47,7 @@ class McpDeps:
     store: Store
     witness: WitnessChannel
     sim_swap_window: timedelta = timedelta(days=7)
+    sim_swap_required: bool = True
 
 
 def _money(amount: Any) -> str:
@@ -95,9 +96,13 @@ def build_server(agent: Agent, deps: McpDeps) -> MCPServer:
         if last:
             swapped = datetime.fromisoformat(str(last).replace("Z", "+00:00"))
             recent = utcnow() - swapped < deps.sim_swap_window
+        checked = bool(result.get("sim_swap_checked", True))
+        if not checked and deps.sim_swap_required:
+            recent = True  # fail closed: an unknown SIM-swap status is treated as a swap
         return {
             "found": True,
             **result,
+            "sim_swap_checked": checked,
             "recent_sim_swap": recent,
             "window_days": deps.sim_swap_window.days,
         }

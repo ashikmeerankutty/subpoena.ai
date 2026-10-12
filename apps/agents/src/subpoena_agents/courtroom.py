@@ -431,7 +431,11 @@ class Courtroom:
                     "result": WitnessAuthResult.FAILED,
                     "subpoena_id": sub.id,
                     "check": "lookup",
-                    "reason": f"SIM swapped on {lookup.get('last_sim_swap')}, within {lookup.get('window_days')} days",
+                    "reason": (
+                        f"SIM swapped on {lookup.get('last_sim_swap')}, within {lookup.get('window_days')} days"
+                        if lookup.get("sim_swap_checked", True)
+                        else "SIM-swap status unavailable from the carrier"
+                    ),
                 },
                 to=Agent.JUDGE,
             )
@@ -841,5 +845,12 @@ def _baseline_view(b: dict[str, Any]) -> dict[str, Any]:
 def _lookup_view(lookup: dict[str, Any]) -> dict[str, Any]:
     return {
         k: lookup.get(k)
-        for k in ("line_type", "carrier", "last_sim_swap", "recent_sim_swap", "source")
+        for k in (
+            "line_type",
+            "carrier",
+            "last_sim_swap",
+            "sim_swap_checked",
+            "recent_sim_swap",
+            "source",
+        )
     }
