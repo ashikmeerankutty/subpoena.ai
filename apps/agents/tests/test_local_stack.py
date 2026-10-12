@@ -104,6 +104,33 @@ def test_full_subpoena_flow_over_http(monkeypatch) -> None:
         assert stats["subpoena_resolution_rate"] == 1.0
 
 
+def test_overview_reports_customer_impact(monkeypatch) -> None:
+    with client(monkeypatch) as c:
+        assert post(c, "coffee", "imp-1").json()["verdict"] == "APPROVE"
+        assert post(c, "clear_fraud", "imp-2").json()["verdict"] == "BLOCK"
+        sim = post(c, "sim_swap", "imp-3").json()
+        wait_for(c, sim["evaluation_id"], "ESCALATED")
+        ev = post(c, "auto_parts_deadlock", "imp-4").json()
+        sub = c.get(f"/v1/subpoenas/{ev['subpoena']['id']}", headers=H).json()
+        code = next(
+            m["body"].split("code is ")[1][:6] for m in sub["messages"] if "code is" in m["body"]
+        )
+        c.post(
+            "/v1/simulator/witness-reply",
+            headers=H,
+            json={"phone": "+14155550123", "body": f"Yes, it was me {code}"},
+        )
+        wait_for(c, ev["evaluation_id"], "RULED")
+
+        impact = c.get("/v1/stats/overview", headers=H).json()["impact"]
+        assert impact["legit_spend_saved"] == {"count": 1, "amounts": {"USD": "4500.00"}}
+        assert impact["fraud_stopped"]["count"] == 2
+        assert impact["fraud_stopped"]["amounts"] == {"USD": "14300.00"}
+        assert impact["customers_not_contacted_rate"] == 0.5
+        assert impact["witness_protection"]["sim_swap_blocked"] == 1
+        assert impact["median_resolution_s"] is not None
+
+
 def test_sync_response_when_courtroom_rules_fast(monkeypatch) -> None:
     with client(monkeypatch) as c:
         r = post(c, "clear_fraud", "e2e-2")

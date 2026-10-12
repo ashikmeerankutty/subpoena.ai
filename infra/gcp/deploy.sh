@@ -31,7 +31,10 @@ sa() { echo "$1@$PROJECT.iam.gserviceaccount.com"; }
 echo "==> APIs"
 $G services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
   cloudtasks.googleapis.com secretmanager.googleapis.com iam.googleapis.com pubsub.googleapis.com \
-  firestore.googleapis.com bigquery.googleapis.com aiplatform.googleapis.com storage.googleapis.com
+  firestore.googleapis.com bigquery.googleapis.com aiplatform.googleapis.com storage.googleapis.com \
+  cloudresourcemanager.googleapis.com
+# Bill API quota to this project, not the gcloud client's shared one (which runs out: HTTP 429).
+export CLOUDSDK_BILLING_QUOTA_PROJECT=$PROJECT
 
 echo "==> Artifact Registry"
 $G artifacts repositories describe subpoena --location="$REGION" >/dev/null 2>&1 ||
@@ -73,7 +76,16 @@ for a in sp-api sp-mcp sp-court sp-console sp-invoker; do
   $G iam service-accounts describe "$(sa $a)" >/dev/null 2>&1 ||
     $G iam service-accounts create "$a" --display-name="Subpoena.ai $a"
 done
-bind() { $G projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$(sa "$1")" --role="$2" --condition=None >/dev/null; }
+# Read the project policy once and only add missing bindings; retries ride out a 429.
+IAM=$($G projects get-iam-policy "$PROJECT" --flatten="bindings[].members" --format="csv[no-heading](bindings.role,bindings.members)" 2>/dev/null || true)
+bind() {
+  printf '%s\n' "$IAM" | grep -qx "$2,serviceAccount:$(sa "$1")" && return 0
+  for try in 1 2 3 4 5; do
+    $G projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$(sa "$1")" --role="$2" --condition=None >/dev/null && return 0
+    echo "    retrying in $((try * 20))s"; sleep $((try * 20))
+  done
+  return 1
+}
 bind sp-api roles/datastore.user
 bind sp-api roles/pubsub.publisher
 bind sp-mcp roles/datastore.user

@@ -10,7 +10,22 @@ import { PageHeader, Panel } from "@/components/Shell";
 import { SendTestEvent } from "@/components/SendTestEvent";
 import { TrendChart } from "@/components/TrendChart";
 import { usePoll } from "@/lib/api";
-import { pct, seconds, usd } from "@/lib/format";
+import { money, pct, seconds, usd } from "@/lib/format";
+
+interface Impact {
+  legit_spend_saved: { count: number; amounts: Record<string, string> };
+  fraud_stopped: { count: number; amounts: Record<string, string>; denied_by_cardholder: number };
+  customers_not_contacted_rate: number | null;
+  median_resolution_s: number | null;
+  witness_protection: { sim_swap_blocked: number; code_failed: number; testimony_flagged: number };
+}
+
+/** Per-currency totals, largest first: "$4,500.00" or "$4,500.00 + €120.00". */
+const totals = (amounts: Record<string, string> | undefined) => {
+  const parts = Object.entries(amounts ?? {}).map(([c, v]) => money(v, c));
+  return parts.length ? parts.join(" + ") : money(0);
+};
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 interface Overview {
   window_hours: number;
@@ -29,6 +44,7 @@ interface Overview {
   top_risk_signals: [string, number][];
   series: Record<string, any>[];
   bucket_minutes?: number;
+  impact?: Impact;
 }
 
 export default function OverviewPage() {
@@ -36,6 +52,8 @@ export default function OverviewPage() {
   const { data } = usePoll<Overview>(`stats/overview?hours=${hours}`, 5000);
   const top = data?.top_risk_signals ?? [];
   const max = Math.max(1, ...top.map(([, n]) => n));
+  const impact = data?.impact;
+  const guard = impact?.witness_protection;
   return (
     <>
       <PageHeader title="Overview" description="Decisions, subpoenas and cost across the workspace."
@@ -49,6 +67,25 @@ export default function OverviewPage() {
           </Box>
           <SendTestEvent openCase={false} />
         </>} />
+      <Panel title="Customer impact">
+        <Text as="p" color="colorTextWeak" marginBottom="space50">
+          What these decisions meant for cardholders in this window.
+        </Text>
+        <KpiGrid>
+          <Kpi label="Genuine purchases approved" value={totals(impact?.legit_spend_saved.amounts)} tone="#0b7a39"
+            hint={`${plural(impact?.legit_spend_saved.count ?? 0, "payment")} approved after the cardholder confirmed, instead of a decline`} />
+          <Kpi label="Fraud stopped" value={totals(impact?.fraud_stopped.amounts)} tone="#c72323"
+            hint={`${plural(impact?.fraud_stopped.count ?? 0, "payment")} blocked · ${impact?.fraud_stopped.denied_by_cardholder ?? 0} denied by the cardholder`} />
+          <Kpi label="Customers not contacted" value={pct(impact?.customers_not_contacted_rate)}
+            hint="decided without a message or a frozen card" />
+          <Kpi label="Median time to resolution" value={seconds(impact?.median_resolution_s)}
+            hint="payment to final decision, including waiting for a reply" />
+          <Kpi label="Witness safeguards triggered"
+            value={(guard?.sim_swap_blocked ?? 0) + (guard?.code_failed ?? 0) + (guard?.testimony_flagged ?? 0)}
+            hint={`${guard?.sim_swap_blocked ?? 0} SIM swap · ${guard?.code_failed ?? 0} failed code · ${guard?.testimony_flagged ?? 0} flagged reply`} />
+        </KpiGrid>
+      </Panel>
+      <Text as="h2" fontSize="fontSize40" fontWeight="fontWeightSemibold" marginBottom="space50">Operations</Text>
       <KpiGrid>
         <Kpi label="Evaluations / hour" value={data?.evaluations_per_hour ?? "—"} hint={`${data?.evaluations ?? 0} total · ${data?.sent_to_court ?? 0} sent to court`} />
         <Kpi label="Approve rate" value={pct(data?.rates.approve)} tone="#0b7a39" />

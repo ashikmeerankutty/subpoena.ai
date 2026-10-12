@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import statistics
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
@@ -13,11 +14,14 @@ from pydantic import ValidationError
 from subpoena_schemas import (
     ApiKey,
     ApiKeyPublic,
+    Evaluation,
     EvaluationResponse,
     EvaluationStatus,
     KeyKind,
     Policy,
     Scope,
+    Subpoena,
+    SubpoenaState,
     Tier0Route,
     Verdict,
     decide,
@@ -90,6 +94,11 @@ async def overview(
         start = datetime.fromtimestamp(ts - ts % (bucket_minutes * 60), tz=UTC).isoformat()
         buckets.setdefault(start, Counter())[e.verdict.value if e.verdict else "PENDING"] += 1
     avoided = sum(1 for e in answered if e.verdict is Verdict.APPROVE)
+    subs = [
+        s
+        for s in await services.store.list_subpoenas(key.workspace_id, STATS_WINDOW_LIMIT)
+        if s.sent_at >= since
+    ]
 
     def rate(k: int) -> float:
         return round(k / n, 4) if n else 0.0
@@ -121,9 +130,56 @@ async def overview(
         "cost_per_courtroom_case_usd": round(statistics.mean(costs), 4) if costs else None,
         "total_cost_usd": round(sum(costs), 4),
         "top_risk_signals": signals.most_common(8),
+        "impact": _impact(evs, subs),
         "bucket_minutes": bucket_minutes,
         "series": [{"hour": h, **dict(c)} for h, c in sorted(buckets.items())],
     }
+
+
+def _impact(evs: list[Evaluation], subs: list[Subpoena]) -> dict[str, Any]:
+    """What the decisions meant for cardholders. Amounts are summed per currency, never converted."""
+    saved: defaultdict[str, Decimal] = defaultdict(Decimal)
+    stopped: defaultdict[str, Decimal] = defaultdict(Decimal)
+    saved_n = stopped_n = denied_by_witness = auto = 0
+    for e in evs:
+        tx = e.transaction
+        if e.verdict is Verdict.APPROVE and e.testimony and e.testimony.claims.confirms_transaction:
+            saved[tx.currency] += tx.amount
+            saved_n += 1
+        if e.verdict is Verdict.BLOCK:
+            stopped[tx.currency] += tx.amount
+            stopped_n += 1
+            if e.testimony and e.testimony.claims.confirms_transaction is False:
+                denied_by_witness += 1
+        if (
+            e.verdict is not None
+            and e.subpoena is None
+            and e.status is not EvaluationStatus.ESCALATED
+        ):
+            auto += 1
+    flagged = sum(1 for e in evs if e.testimony and e.testimony.flagged_by_screening)
+    # Payment to final decision, including the cases that waited for the cardholder's reply.
+    resolution = [(e.ruled_at - e.created_at).total_seconds() for e in evs if e.ruled_at]
+    states = Counter(s.state for s in subs)
+    return {
+        "legit_spend_saved": {"count": saved_n, "amounts": _money(saved)},
+        "fraud_stopped": {
+            "count": stopped_n,
+            "amounts": _money(stopped),
+            "denied_by_cardholder": denied_by_witness,
+        },
+        "customers_not_contacted_rate": round(auto / len(evs), 4) if evs else None,
+        "median_resolution_s": round(statistics.median(resolution), 2) if resolution else None,
+        "witness_protection": {
+            "sim_swap_blocked": states[SubpoenaState.AUTH_FAILED],
+            "code_failed": states[SubpoenaState.CODE_FAILED],
+            "testimony_flagged": flagged,
+        },
+    }
+
+
+def _money(totals: dict[str, Decimal]) -> dict[str, str]:
+    return {c: f"{v:.2f}" for c, v in sorted(totals.items(), key=lambda kv: -kv[1])}
 
 
 @router.get("/subpoenas")
