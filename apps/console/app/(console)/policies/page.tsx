@@ -57,7 +57,7 @@ export default function PoliciesPage() {
     try {
       const p = await api<Policy>("policies", { method: "POST", body: JSON.stringify(body()) });
       toast.push({ message: `Published policy v${p.version}`, variant: "success", dismissAfter: 4000 });
-      setDraft(null); setSim(null); reload();
+      setDraft(p); setSim(null); reload();
     } catch (e) { toast.push({ message: (e as Error).message, variant: "error", dismissAfter: 5000 }); }
   }
   const num = (label: string, path: string[], value: number, step = 0.01, help?: string) => (
