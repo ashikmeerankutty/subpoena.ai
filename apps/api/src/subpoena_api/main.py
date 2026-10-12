@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 from collections.abc import AsyncIterator
@@ -10,14 +11,29 @@ from typing import Any
 from fastapi import FastAPI
 
 from subpoena_schemas import ApiKey, Policy, Scope, Workspace
-from subpoena_store import MemoryStore, Store, build_media_store
+from subpoena_store import (
+    MemoryStore,
+    PrecedentLibrary,
+    Store,
+    build_embedder,
+    build_media_store,
+)
 
 from . import problems
 from .baselines import BaselineSource, FirestoreBaselines, SeedBaselines
 from .deps import GoogleVerifier, Services
 from .pii import MaskPiiMiddleware
 from .publisher import LogPublisher, MemoryPublisher, Publisher, PubSubPublisher
-from .routes import api_keys, console, destinations, evaluations, members, sessions, twilio
+from .routes import (
+    api_keys,
+    console,
+    destinations,
+    evaluations,
+    members,
+    precedents,
+    sessions,
+    twilio,
+)
 from .routes.api_keys import issue_key
 from .security import display_prefix, hash_secret
 from .settings import Settings, get_settings
@@ -71,6 +87,16 @@ def build_services(settings: Settings) -> Services:
         if settings.google_client_id
         else None,
         media=build_media_store(settings.media_store, settings.media_bucket, settings.gcp_project),
+        precedents=PrecedentLibrary(
+            store,
+            build_embedder(
+                settings.embeddings,
+                settings.gcp_project,
+                settings.embedding_location,
+                settings.embedding_model,
+            ),
+            json.loads((settings.seed_dir / "precedents.json").read_text()),
+        ),
     )
 
 
@@ -113,6 +139,7 @@ def create_app(services: Services | None = None, *, bootstrap_local: bool = Fals
     app.include_router(console.router)
     app.include_router(members.router)
     app.include_router(destinations.router)
+    app.include_router(precedents.router)
     app.include_router(sessions.router)
     app.include_router(twilio.router)
 

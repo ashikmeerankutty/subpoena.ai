@@ -14,6 +14,7 @@ import { Topbar, TopbarActions } from "@twilio-paste/core/topbar";
 import { ProductContactCenterTasksIcon } from "@twilio-paste/icons/esm/ProductContactCenterTasksIcon";
 import { ProductDebuggerIcon } from "@twilio-paste/icons/esm/ProductDebuggerIcon";
 import { ProductDestinationsIcon } from "@twilio-paste/icons/esm/ProductDestinationsIcon";
+import { ProductEventLibraryIcon } from "@twilio-paste/icons/esm/ProductEventLibraryIcon";
 import { ProductHomeIcon } from "@twilio-paste/icons/esm/ProductHomeIcon";
 import { ProductLogsIcon } from "@twilio-paste/icons/esm/ProductLogsIcon";
 import { ProductSettingsIcon } from "@twilio-paste/icons/esm/ProductSettingsIcon";
@@ -37,6 +38,7 @@ const NAV = [
   { href: "/cases", label: "Cases", icon: ProductContactCenterTasksIcon },
   { href: "/subpoenas", label: "Subpoenas", icon: ProductMessagingIcon },
   { href: "/policies", label: "Policies", icon: ProductProtocolsIcon },
+  { href: "/precedents", label: "Precedents", icon: ProductEventLibraryIcon },
   { href: "/audit-log", label: "Audit Log", icon: ProductLogsIcon },
   { href: "/settings", label: "Settings", icon: ProductSettingsIcon },
 ];

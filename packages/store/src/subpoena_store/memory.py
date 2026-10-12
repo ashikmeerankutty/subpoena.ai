@@ -15,6 +15,7 @@ from subpoena_schemas import (
     Member,
     PipelineEvent,
     Policy,
+    Precedent,
     Subpoena,
     SubpoenaState,
     WitnessMessage,
@@ -42,6 +43,7 @@ class MemoryStore:
         self._audit: list[AuditEntry] = []
         self._destinations: dict[str, Destination] = {}
         self._deliveries: list[Delivery] = []
+        self._precedents: dict[str, Precedent] = {}
         self._lock = asyncio.Lock()
 
     async def put_workspace(self, ws: Workspace) -> None:
@@ -229,3 +231,19 @@ class MemoryStore:
     async def list_deliveries(self, workspace_id: str, limit: int) -> list[Delivery]:
         rows = [d for d in self._deliveries if d.workspace_id == workspace_id]
         return sorted(rows, key=lambda d: d.at, reverse=True)[:limit]
+
+    async def put_precedent(self, precedent: Precedent) -> None:
+        assert precedent.workspace_id
+        self._precedents[precedent.id] = precedent
+
+    async def get_precedent(self, workspace_id: str, precedent_id: str) -> Precedent | None:
+        p = self._precedents.get(precedent_id)
+        return p if p and p.workspace_id == workspace_id else None
+
+    async def list_precedents(self, workspace_id: str) -> list[Precedent]:
+        rows = [p for p in self._precedents.values() if p.workspace_id == workspace_id]
+        return sorted(rows, key=lambda p: p.created_at, reverse=True)
+
+    async def delete_precedent(self, workspace_id: str, precedent_id: str) -> None:
+        if await self.get_precedent(workspace_id, precedent_id):
+            del self._precedents[precedent_id]

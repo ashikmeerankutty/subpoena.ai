@@ -76,6 +76,8 @@ bind sp-api roles/pubsub.publisher
 bind sp-mcp roles/datastore.user
 bind sp-mcp roles/bigquery.dataViewer
 bind sp-mcp roles/bigquery.jobUser
+bind sp-mcp roles/aiplatform.user   # precedent embeddings
+bind sp-api roles/aiplatform.user   # precedent search in the Console
 bind sp-court roles/datastore.user
 bind sp-court roles/aiplatform.user
 bind sp-court roles/cloudtasks.enqueuer
@@ -145,10 +147,10 @@ COMMON=(--region="$REGION" --image="$REPO/backend:$TAG" --min-instances=0 --cpu=
 ENV="SUBPOENA_ENV=demo,SUBPOENA_GCP_PROJECT=$PROJECT,SUBPOENA_STORE=firestore"
 MEDIA="SUBPOENA_MEDIA_STORE=gcs,SUBPOENA_MEDIA_BUCKET=$BUCKET"
 
-MCP_ENV="APP=subpoena_mcp.app:create_app,$ENV,SUBPOENA_DATA=bigquery,SUBPOENA_WITNESS_CHANNEL=simulator"
+MCP_ENV="APP=subpoena_mcp.app:create_app,$ENV,SUBPOENA_DATA=bigquery,SUBPOENA_WITNESS_CHANNEL=simulator,SUBPOENA_EMBEDDINGS=vertex"
 MCP_SECRETS="SUBPOENA_AGENT_TOKEN_SECRET=agent-token-secret:latest"
 API_SECRETS="SUBPOENA_API_KEY_PEPPER=api-key-pepper:latest,SUBPOENA_WEBHOOK_SIGNING_SECRET=webhook-signing-secret:latest"
-API_ENV="APP=subpoena_api.main:create_app,$ENV,$MEDIA,SUBPOENA_PUBLISHER=pubsub,SUBPOENA_BASELINES=firestore,SUBPOENA_WITNESS_SIMULATOR=true,SUBPOENA_BIGQUERY_EXPORT_TABLE=$EXPORT_TABLE"
+API_ENV="APP=subpoena_api.main:create_app,$ENV,$MEDIA,SUBPOENA_PUBLISHER=pubsub,SUBPOENA_BASELINES=firestore,SUBPOENA_WITNESS_SIMULATOR=true,SUBPOENA_BIGQUERY_EXPORT_TABLE=$EXPORT_TABLE,SUBPOENA_EMBEDDINGS=vertex"
 CONSOLE_ARGS=()
 if [ -n "$GOOGLE" ]; then
   API_ENV+=",SUBPOENA_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"

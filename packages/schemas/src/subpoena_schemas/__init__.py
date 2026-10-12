@@ -48,6 +48,7 @@ from .policy import (
     decide,
     decide_after_testimony,
 )
+from .precedent import Precedent, PrecedentSource
 from .subpoena import (
     DeliveryStatus,
     MediaRef,
@@ -130,6 +131,8 @@ __all__ = [
     "PageMeta",
     "PipelineEvent",
     "Policy",
+    "Precedent",
+    "PrecedentSource",
     "ReceiptCheck",
     "ReceiptOut",
     "ReceiptResult",

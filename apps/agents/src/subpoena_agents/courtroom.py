@@ -12,6 +12,7 @@ import logging
 import time
 from datetime import timedelta
 from typing import Any
+from urllib.parse import quote
 
 from subpoena_api.webhooks import BankNotifier
 from subpoena_mcp.client import AgentSession, McpConnector
@@ -46,7 +47,7 @@ from subpoena_schemas import (
     utcnow,
 )
 from subpoena_schemas.evaluation import Evaluation
-from subpoena_store import MediaStore, MemoryMediaStore, Store
+from subpoena_store import MediaStore, MemoryMediaStore, Store, case_text, precedent_for
 
 from . import evidence, pricing, prompts, receipts
 from .llm import Llm, LlmError, LlmResult
@@ -211,10 +212,15 @@ class Courtroom:
         ev = await self._save(ev, findings=findings)
         finding_view = [f.model_dump(mode="json", exclude={"source_ref"}) for f in findings]
 
-        # Defense precedent search.
+        # Defense precedent search (embedding similarity over this workspace's rulings + seed).
         async with self.mcp.session(Agent.DEFENSE) as defense:
-            q = " ".join(f.type.lower() for f in findings) + f" {ev.transaction.type.value.lower()}"
-            precedents = (await self._read(ev, defense, f"precedents://search/{q}"))["precedents"]
+            q = quote(case_text(ev, with_outcome=False)[0], safe="")
+            found = await self._read(ev, defense, f"precedents://{ev.workspace_id}/search/{q}")
+        # Short citation IDs for the debate; the library ID stays alongside.
+        precedents = [
+            {**p, "precedent_id": p["id"], "id": f"P{i}"}
+            for i, p in enumerate(found["precedents"], start=1)
+        ]
         valid_ids = {f.id for f in findings} | {p["id"] for p in precedents}
 
         # Opening arguments and rebuttals.
@@ -890,6 +896,13 @@ class Courtroom:
                 "reissue_card": decision.reissue_card,
             },
         )
+        # Stare decisis: the ruling joins this workspace's precedent library.
+        precedent = precedent_for(ev)
+        if precedent is not None:
+            try:
+                await self.store.put_precedent(precedent)
+            except Exception:  # never fail a verdict over the library
+                log.exception("could not record precedent for %s", ev.evaluation_id)
         return ev
 
 

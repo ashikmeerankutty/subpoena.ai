@@ -26,7 +26,7 @@ class DataSource(Protocol):
     def graph_neighbors(self, entity_id: str) -> dict[str, Any]: ...
     def ip_info(self, ip: str) -> dict[str, Any] | None: ...
     def merchant(self, name: str) -> dict[str, Any] | None: ...
-    def precedents(self, query: str, limit: int = 3) -> list[dict[str, Any]]: ...
+    def seed_precedents(self) -> list[dict[str, Any]]: ...
 
 
 def _norm(name: str) -> str:
@@ -55,16 +55,9 @@ class _ReferenceData:
     def baseline(self, user_id: str) -> UserBaseline | None:
         return self._baselines.get(user_id)
 
-    def precedents(self, query: str, limit: int = 3) -> list[dict[str, Any]]:
-        """Keyword-overlap ranking; stands in for vector search over past rulings."""
-        words = set(re.findall(r"[a-z0-9_]+", query.lower()))
-
-        def score(p: dict[str, Any]) -> int:
-            text = set(re.findall(r"[a-z0-9_]+", p["summary"].lower())) | set(p["tags"])
-            return len(words & text)
-
-        ranked = sorted(self._precedents, key=score, reverse=True)
-        return [p for p in ranked if score(p) > 0][:limit]
+    def seed_precedents(self) -> list[dict[str, Any]]:
+        """The shipped precedent library (searched by ``subpoena_store.PrecedentLibrary``)."""
+        return list(self._precedents)
 
 
 class SeedData(_ReferenceData):

@@ -156,3 +156,16 @@ export interface AuditEntry {
   after: Record<string, unknown> | null;
   at: string;
 }
+
+export interface Precedent {
+  id: string;
+  summary: string;
+  verdict: string;
+  label: "FRAUD" | "LEGIT";
+  tags: string[];
+  source: "SEED" | "CASE" | "OVERRIDE";
+  evaluation_id: string | null;
+  embedding_model: string | null;
+  created_at: string;
+  similarity?: number;
+}

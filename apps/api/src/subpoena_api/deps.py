@@ -10,7 +10,14 @@ from typing import Annotated, Any
 from fastapi import Depends, Request
 
 from subpoena_schemas import Actor, ApiKey, AuditEntry, Policy, Role, Scope, role_for, utcnow
-from subpoena_store import MediaStore, MemoryMediaStore, Store
+from subpoena_store import (
+    HashEmbedder,
+    MediaStore,
+    MemoryMediaStore,
+    MemoryStore,
+    PrecedentLibrary,
+    Store,
+)
 
 from .baselines import BaselineSource
 from .problems import ProblemError
@@ -34,6 +41,9 @@ class Services:
     notifier: BankNotifier
     google_verifier: GoogleVerifier | None = None
     media: MediaStore = field(default_factory=MemoryMediaStore)
+    precedents: PrecedentLibrary = field(
+        default_factory=lambda: PrecedentLibrary(MemoryStore(), HashEmbedder())
+    )
 
 
 def get_services(request: Request) -> Services:

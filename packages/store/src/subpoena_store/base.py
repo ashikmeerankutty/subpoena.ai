@@ -16,6 +16,7 @@ from subpoena_schemas import (
     Member,
     PipelineEvent,
     Policy,
+    Precedent,
     Subpoena,
     Verdict,
     WitnessMessage,
@@ -151,3 +152,9 @@ class Store(Protocol):
     async def list_deliveries(self, workspace_id: str, limit: int) -> list[Delivery]:
         """Newest first."""
         ...
+
+    # Precedents (workspace library; the seed library ships with the code)
+    async def put_precedent(self, precedent: Precedent) -> None: ...
+    async def get_precedent(self, workspace_id: str, precedent_id: str) -> Precedent | None: ...
+    async def list_precedents(self, workspace_id: str) -> list[Precedent]: ...
+    async def delete_precedent(self, workspace_id: str, precedent_id: str) -> None: ...

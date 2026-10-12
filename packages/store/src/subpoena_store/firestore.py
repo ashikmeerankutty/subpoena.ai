@@ -15,6 +15,7 @@ Layout
   workspaces/{workspace_id}/audit/{id}   append-only, ordered by ``at``
   workspaces/{workspace_id}/destinations/{id}
   workspaces/{workspace_id}/deliveries/{id}   delivery log, ordered by ``at``
+  workspaces/{workspace_id}/precedents/{id}   with its embedding (small library, scanned)
 
 Documents are stored in Pydantic's JSON mode (Decimals and datetimes as strings), so
 reading back is a plain ``model_validate``. Fields used in queries get native copies.
@@ -39,6 +40,7 @@ from subpoena_schemas import (
     Member,
     PipelineEvent,
     Policy,
+    Precedent,
     Subpoena,
     SubpoenaState,
     WitnessMessage,
@@ -456,3 +458,24 @@ class FirestoreStore:
             .limit(limit)
         )
         return [Delivery.model_validate(_strip(s.to_dict())) async for s in query.stream()]
+
+    # Precedents ----------------------------------------------------------------------------
+
+    async def put_precedent(self, precedent: Precedent) -> None:
+        assert precedent.workspace_id
+        col = self._ws_col(precedent.workspace_id, "precedents")
+        await col.document(precedent.id).set(_doc(precedent))
+
+    async def get_precedent(self, workspace_id: str, precedent_id: str) -> Precedent | None:
+        snap = await self._ws_col(workspace_id, "precedents").document(precedent_id).get()
+        return Precedent.model_validate(snap.to_dict()) if snap.exists else None
+
+    async def list_precedents(self, workspace_id: str) -> list[Precedent]:
+        rows = [
+            Precedent.model_validate(s.to_dict())
+            async for s in self._ws_col(workspace_id, "precedents").stream()
+        ]
+        return sorted(rows, key=lambda p: p.created_at, reverse=True)
+
+    async def delete_precedent(self, workspace_id: str, precedent_id: str) -> None:
+        await self._ws_col(workspace_id, "precedents").document(precedent_id).delete()

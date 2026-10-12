@@ -16,13 +16,14 @@ import { OverrideModal } from "@/components/OverrideModal";
 import { PipelineGraph } from "@/components/PipelineGraph";
 import { PageHeader, Panel, useMe } from "@/components/Shell";
 import { PFraud, StatusBadge } from "@/components/StatusBadge";
+import { PrecedentTable } from "@/components/PrecedentTable";
 import { ReceiptCard } from "@/components/ReceiptCard";
 import { Transcript } from "@/components/Transcript";
 import { WitnessChat } from "@/components/WitnessChat";
 import { api, usePoll } from "@/lib/api";
 import { AGENTS } from "@/lib/agents";
 import { money, seconds, time, usd } from "@/lib/format";
-import type { AgentName, Evaluation, Page, PipelineEvent } from "@/lib/types";
+import type { AgentName, Evaluation, Page, PipelineEvent, Precedent } from "@/lib/types";
 
 const FINAL = ["RULED", "ESCALATED", "APPEALED"];
 
@@ -211,10 +212,20 @@ export default function CasePage() {
                 </Panel>
               </Box>
             </Box>
+            <SimilarCases evaluationId={ev.evaluation_id} />
           </TabPanel>
         </TabPanels>
       </Tabs>
       {ev && overrideOpen ? <OverrideModal ev={ev} open={overrideOpen} onClose={() => setOverrideOpen(false)} onDone={(e) => { setEv(e); reload(); }} /> : null}
     </>
+  );
+}
+
+function SimilarCases({ evaluationId }: { evaluationId: string }) {
+  const { data } = usePoll<{ data: Precedent[] }>(`evaluations/${evaluationId}/similar?limit=5`);
+  return (
+    <Panel title="Similar cases (precedents)">
+      {data?.data.length ? <PrecedentTable rows={data.data} /> : <Text as="p" color="colorTextWeak">{data ? "No similar precedents yet." : "Searching…"}</Text>}
+    </Panel>
   );
 }

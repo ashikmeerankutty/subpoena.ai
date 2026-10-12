@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     media_bucket: str | None = None
     max_media_bytes: int = 5_000_000
     console_public_url: str | None = None  # for links in Slack alerts
+    embeddings: Literal["hash", "vertex"] = "hash"  # precedent search
+    embedding_model: str = "text-embedding-005"
+    embedding_location: str = "us-central1"
     bigquery_export_table: str | None = None  # suggested BigQuery destination table
 
     @property

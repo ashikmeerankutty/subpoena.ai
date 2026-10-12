@@ -99,7 +99,7 @@ subpoena.ai/
 ### M0 — Project Bootstrap
 - [x] Monorepo scaffold per §3, linting/formatting, CI (lint + unit tests).
 - [~] Terraform for core GCP resources and service accounts. *(idempotent `infra/gcp/deploy.sh` instead)*
-- [ ] Twilio accounts, sender and template submitted for approval (long lead time — start first).
+- [~] Twilio accounts, sender and template submitted for approval (long lead time — start first). *(account, Verify, Lookup and WhatsApp sandbox live; production WhatsApp Sender/template not submitted)*
 
 **Exit criteria:** `terraform apply` creates the demo project; CI is green on an empty build.
 
@@ -132,7 +132,7 @@ subpoena.ai/
 
 ### M4 — Courthouse Console (core)
 - [x] Next.js app with Twilio Paste, Segment-style shell: sidebar, workspace switcher, tables, detail drawers (*Spec §10*).
-- [~] Identity Platform login with Google SSO; roles `ADMIN` / `ANALYST` / `VIEWER`. *(API-key login with roles from scopes; see docs/decisions.md)*
+- [x] Identity Platform login with Google SSO; roles `ADMIN` / `ANALYST` / `VIEWER`. *(Google OIDC sign-in + members/roles; API-key login kept; see docs/decisions.md)*
 - [x] **Overview** KPI tiles and trends.
 - [x] **Sources**: API key create/rotate/revoke (secret shown once), integration snippets, ingest health.
 - [x] **Transactions**: live debugger via Firestore listeners, raw/enriched JSON toggle.
@@ -143,12 +143,12 @@ subpoena.ai/
 **Exit criteria:** the full demo (*Spec §17*) can be driven from the Console without touching logs or the terminal.
 
 ### M5 — Stretch & Polish
-- [ ] Destinations (webhook, Slack, Pub/Sub, BigQuery export) with delivery log.
+- [x] Destinations (webhook, Slack, Pub/Sub, BigQuery export) with delivery log.
 - [x] Policies editor with versioning and simulate-against-history.
-- [ ] Precedents library with vector search used by Defense/Judge.
-- [ ] Receipt-photo testimony via Gemini vision.
+- [x] Precedents library with vector search used by Defense/Judge.
+- [x] Receipt-photo testimony via Gemini vision.
 - [ ] Voice subpoena via Twilio ConversationRelay.
-- [ ] Audit Log and Settings pages.
+- [x] Audit Log and Settings pages.
 
 ### M6 — Demo Hardening
 - [x] Scripted demo scenarios with a reset command. *(`python -m subpoena_agents.demo`; reset = new workspace via `python -m subpoena_api.admin create-workspace`)*

@@ -11,11 +11,13 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
+from urllib.parse import unquote
 
 from mcp.server.mcpserver import MCPServer
 
 from subpoena_schemas import Agent, Channel, Policy, utcnow
-from subpoena_store import Store
+from subpoena_store import PrecedentLibrary, Store
+from subpoena_store.precedents import public
 
 from . import intel
 from .data import DataSource
@@ -46,6 +48,7 @@ class McpDeps:
     data: DataSource
     store: Store
     witness: WitnessChannel
+    precedents: PrecedentLibrary
     sim_swap_window: timedelta = timedelta(days=7)
     sim_swap_required: bool = True
 
@@ -210,10 +213,12 @@ def _register_resources(server: MCPServer, deps: McpDeps) -> None:
         """Linked accounts, devices, IPs and payees, with risk flags."""
         return deps.data.graph_neighbors(entity_id)
 
-    @server.resource("precedents://search/{q}", mime_type="application/json")
-    def precedents(q: str) -> dict[str, Any]:
-        """Similar past cases and their verdicts."""
-        return {"query": q, "precedents": deps.data.precedents(q)}
+    @server.resource("precedents://{workspace_id}/search/{q}", mime_type="application/json")
+    async def precedents(workspace_id: str, q: str) -> dict[str, Any]:
+        """Past rulings most similar to the case description (embedding similarity)."""
+        query = unquote(q)  # callers percent-encode free text to keep the URI valid
+        hits = await deps.precedents.search(workspace_id, query, limit=3)
+        return {"query": query, "precedents": [public(p, sim) for p, sim in hits]}
 
     @server.resource("policy://{tenant_id}/active", mime_type="application/json")
     async def policy(tenant_id: str) -> dict[str, Any]:
