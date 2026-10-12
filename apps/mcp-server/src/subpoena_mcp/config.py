@@ -20,6 +20,9 @@ class McpSettings(BaseSettings):
     seed_dir: Path = REPO_ROOT / "data" / "seed"
 
     witness_channel: Literal["simulator", "twilio"] = "simulator"
+    embeddings: Literal["hash", "vertex"] = "hash"  # precedent search
+    embedding_model: str = "text-embedding-005"
+    embedding_location: str = "us-central1"
     sim_swap_window_days: int = 7
     # Fail closed when the carrier cannot report SIM-swap status (Twilio trial accounts can't).
     sim_swap_required: bool = True

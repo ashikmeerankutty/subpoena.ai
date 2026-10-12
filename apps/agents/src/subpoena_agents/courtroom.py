@@ -12,6 +12,7 @@ import logging
 import time
 from datetime import timedelta
 from typing import Any
+from urllib.parse import quote
 
 from subpoena_api.webhooks import BankNotifier
 from subpoena_mcp.client import AgentSession, McpConnector
@@ -29,6 +30,9 @@ from subpoena_schemas import (
     Outcome,
     PipelineEvent,
     Policy,
+    ReceiptCheck,
+    ReceiptOut,
+    ReceiptResult,
     RulingOut,
     Severity,
     Subpoena,
@@ -43,9 +47,9 @@ from subpoena_schemas import (
     utcnow,
 )
 from subpoena_schemas.evaluation import Evaluation
-from subpoena_store import Store
+from subpoena_store import MediaStore, MemoryMediaStore, Store, case_text, precedent_for
 
-from . import evidence, pricing, prompts
+from . import evidence, pricing, prompts, receipts
 from .llm import Llm, LlmError, LlmResult
 from .scheduler import Scheduler
 from .screening import Screener
@@ -66,6 +70,7 @@ class Courtroom:
         notifier: BankNotifier,
         scheduler: Scheduler,
         max_rounds: int = 2,
+        media: MediaStore | None = None,
     ) -> None:
         self.store = store
         self.mcp = mcp
@@ -74,6 +79,7 @@ class Courtroom:
         self.notifier = notifier
         self.scheduler = scheduler
         self.max_rounds = max_rounds
+        self.media = media or MemoryMediaStore()
         self._locks: dict[str, asyncio.Lock] = {}
 
     # ------------------------------------------------------------------ helpers
@@ -206,10 +212,15 @@ class Courtroom:
         ev = await self._save(ev, findings=findings)
         finding_view = [f.model_dump(mode="json", exclude={"source_ref"}) for f in findings]
 
-        # Defense precedent search.
+        # Defense precedent search (embedding similarity over this workspace's rulings + seed).
         async with self.mcp.session(Agent.DEFENSE) as defense:
-            q = " ".join(f.type.lower() for f in findings) + f" {ev.transaction.type.value.lower()}"
-            precedents = (await self._read(ev, defense, f"precedents://search/{q}"))["precedents"]
+            q = quote(case_text(ev, with_outcome=False)[0], safe="")
+            found = await self._read(ev, defense, f"precedents://{ev.workspace_id}/search/{q}")
+        # Short citation IDs for the debate; the library ID stays alongside.
+        precedents = [
+            {**p, "precedent_id": p["id"], "id": f"P{i}"}
+            for i, p in enumerate(found["precedents"], start=1)
+        ]
         valid_ids = {f.id for f in findings} | {p["id"] for p in precedents}
 
         # Opening arguments and rebuttals.
@@ -599,6 +610,35 @@ class Courtroom:
             return ev
         return await self._admit(ev, sub, policy)
 
+    async def _read_receipt(
+        self, ev: Evaluation, sub: Subpoena
+    ) -> tuple[ReceiptCheck | None, LlmResult[ReceiptOut] | None]:
+        """Read the first photo the witness sent and compare it with the transaction."""
+        photo = next((m for m in sub.media if m.content_type.startswith("image/")), None)
+        if photo is None:
+            return None, None
+
+        def unreadable(reason: str) -> ReceiptCheck:
+            return ReceiptCheck(
+                media_id=photo.id, result=ReceiptResult.UNREADABLE, reasons=[reason]
+            )
+
+        found = await self.media.get(f"{sub.workspace_id}/{photo.id}")
+        if found is None:
+            return unreadable("The photo is no longer available"), None
+        try:
+            read = await self.llm.generate(
+                Agent.WITNESS,
+                prompts.RECEIPT,
+                {"task": "Read the attached photo."},
+                ReceiptOut,
+                images=[found],
+            )
+        except LlmError as exc:
+            log.warning("receipt read failed for %s: %s", sub.id, exc)
+            return unreadable("The photo could not be read"), None
+        return receipts.compare(photo.id, read.value, ev.transaction), read
+
     async def _admit(self, ev: Evaluation, sub: Subpoena, policy: Policy) -> Evaluation:
         """Testimony is authenticated: screen, extract, re-rule (Spec §5 'After testimony')."""
         assert sub.reply_text is not None
@@ -614,10 +654,13 @@ class Courtroom:
             TestimonyClaims,
         )
         claims = extracted.value
+        receipt, read = await self._read_receipt(ev, sub)
         testimony = Testimony(
             subpoena_id=sub.id,
             raw_text=sub.reply_text,
             claims=claims,
+            media_refs=[m.id for m in sub.media],
+            receipt=receipt,
             witness_auth_result=WitnessAuthResult.PASSED,
             flagged_by_screening=screening.flagged,
             screening_reasons=screening.reasons,
@@ -637,6 +680,15 @@ class Courtroom:
             to=Agent.JUDGE,
             result=extracted,
         )
+        if receipt is not None:
+            await self.emit(
+                ev,
+                Agent.WITNESS,
+                EventType.EVIDENCE,
+                {"kind": "receipt", "subpoena_id": sub.id, **receipt.model_dump(mode="json")},
+                to=Agent.JUDGE,
+                result=read,
+            )
         ev = await self._save(ev, testimony=testimony)
         await self.notifier.notify(
             ev,
@@ -679,6 +731,9 @@ class Courtroom:
                 if screening.flagged
                 else f"<untrusted>{sub.reply_text}</untrusted>",
                 "screening_flagged": screening.flagged,
+                "receipt": receipt.model_dump(mode="json", exclude={"media_id"})
+                if receipt
+                else None,
             },
             "policy_thresholds": policy.thresholds.model_dump(),
         }
@@ -696,6 +751,17 @@ class Courtroom:
                 verdict=Verdict.HOLD,
                 status=EvaluationStatus.ESCALATED,
                 reason="Testimony was flagged by screening (possible prompt injection); an analyst must confirm",
+            )
+        if (
+            receipt is not None
+            and receipt.result is ReceiptResult.MISMATCH
+            and decision.outcome is Outcome.APPROVE
+        ):
+            decision = Decision(
+                outcome=Outcome.ESCALATE,
+                verdict=Verdict.HOLD,
+                status=EvaluationStatus.ESCALATED,
+                reason="The witness's receipt does not match this transaction; an analyst must confirm",
             )
         await self.emit(
             ev,
@@ -776,6 +842,11 @@ class Courtroom:
                     f.model_dump(mode="json", exclude={"source_ref"}) for f in ev.findings
                 ],
                 "testimony": ev.testimony.claims.model_dump() if ev.testimony else None,
+                "receipt_check": ev.testimony.receipt.model_dump(
+                    mode="json", include={"result", "merchant", "amount", "date", "reasons"}
+                )
+                if ev.testimony and ev.testimony.receipt
+                else None,
             }
             try:
                 result = await self.llm.generate(
@@ -825,6 +896,13 @@ class Courtroom:
                 "reissue_card": decision.reissue_card,
             },
         )
+        # Stare decisis: the ruling joins this workspace's precedent library.
+        precedent = precedent_for(ev)
+        if precedent is not None:
+            try:
+                await self.store.put_precedent(precedent)
+            except Exception:  # never fail a verdict over the library
+                log.exception("could not record precedent for %s", ev.evaluation_id)
         return ev
 
 

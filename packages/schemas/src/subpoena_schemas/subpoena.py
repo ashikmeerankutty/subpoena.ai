@@ -42,6 +42,40 @@ class SubpoenaRef(Model):
     expires_at: datetime
 
 
+class MediaRef(Model):
+    """A photo the witness sent. Bytes live in the media store under ``{workspace_id}/{id}``."""
+
+    id: str = Field(default_factory=lambda: new_id("med"))
+    content_type: str
+    size_bytes: int = Field(ge=0)
+    sha256: str
+    source: str = Field(description="twilio | simulator")
+
+
+class ReceiptResult(StrEnum):
+    MATCH = "MATCH"  # merchant and amount match (date too, when visible)
+    PARTIAL = "PARTIAL"  # some fields match, others not visible
+    MISMATCH = "MISMATCH"  # a visible field contradicts the transaction
+    NOT_A_RECEIPT = "NOT_A_RECEIPT"
+    UNREADABLE = "UNREADABLE"
+
+
+class ReceiptCheck(Model):
+    """Deterministic comparison of an extracted receipt with the transaction (Spec §6 step 5)."""
+
+    media_id: str
+    result: ReceiptResult
+    merchant: str | None = None
+    amount: str | None = None
+    currency: str | None = None
+    date: str | None = None
+    order_reference: str | None = None
+    merchant_match: bool | None = None
+    amount_match: bool | None = None
+    date_match: bool | None = None
+    reasons: list[str] = Field(default_factory=list)
+
+
 class Subpoena(SubpoenaRef):
     id: str = Field(default_factory=lambda: new_id("sbp"))
     workspace_id: str
@@ -58,6 +92,7 @@ class Subpoena(SubpoenaRef):
     code_verified: bool = False
     code_attempts: int = 0
     responded_at: datetime | None = None
+    media: list[MediaRef] = Field(default_factory=list, description="Photos sent by the witness")
 
     def ref(self) -> SubpoenaRef:
         return SubpoenaRef(
@@ -81,6 +116,7 @@ class Testimony(Model):
     raw_text: str = Field(description="Redacted; untrusted content")
     claims: TestimonyClaims
     media_refs: list[str] = Field(default_factory=list)
+    receipt: ReceiptCheck | None = None
     witness_auth_result: WitnessAuthResult
     flagged_by_screening: bool = False
     screening_reasons: list[str] = Field(default_factory=list)
@@ -105,4 +141,5 @@ class WitnessMessage(Model):
     body: str
     sid: str | None = None
     status: DeliveryStatus = DeliveryStatus.QUEUED
+    media: list[MediaRef] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)

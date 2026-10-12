@@ -164,3 +164,26 @@ def test_redelivery_is_idempotent(h: Harness) -> None:
 
     first, second = run(go())
     assert first == second
+
+
+def test_rulings_become_precedents_for_later_cases(h: Harness) -> None:
+    async def go():
+        await h.setup()
+        first = await h.case("clear_fraud")
+        first = await h.court.run_case(first.evaluation_id)
+        assert first.verdict is Verdict.BLOCK
+        stored = await h.store.list_precedents(h.workspace.id)
+        assert [p.evaluation_id for p in stored] == [first.evaluation_id]
+        assert stored[0].label == "FRAUD" and "Ruled BLOCK" in stored[0].summary
+
+        second = await h.case("clear_fraud", transaction_id="tx_again")
+        await h.court.run_case(second.evaluation_id)
+        events = await h.store.list_events(second.evaluation_id)
+        search = next(
+            e for e in events if e.type.value == "TOOL_CALL" and "precedents://" in str(e.payload)
+        )
+        return first, search.payload["result"]["precedents"]
+
+    first, found = run(go())
+    assert found[0]["evaluation_id"] == first.evaluation_id  # the earlier ruling ranks first
+    assert found[0]["similarity"] > 0.9

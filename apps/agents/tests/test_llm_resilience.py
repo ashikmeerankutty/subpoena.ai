@@ -29,7 +29,13 @@ def test_rate_limits_fall_back_to_second_model(monkeypatch: pytest.MonkeyPatch) 
     calls: list[str] = []
 
     async def once(
-        self: Any, role: Agent, instruction: str, ctx: dict[str, Any], schema: Any, model: str
+        self: Any,
+        role: Agent,
+        instruction: str,
+        ctx: dict[str, Any],
+        schema: Any,
+        model: str,
+        images: Any = None,
     ):
         calls.append(model)
         if model == "gemini-2.5-flash":

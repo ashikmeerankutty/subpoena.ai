@@ -1,9 +1,9 @@
-// Sign in with a workspace API key: verified against /v1/me, then stored in an httpOnly cookie.
+// Sign in with a workspace API key (verified against /v1/me), or sign out of either kind of session.
 import { cookies } from "next/headers";
 
-export const dynamic = "force-dynamic";
+import { API, SESSION_COOKIE, setSession } from "@/lib/server/auth";
 
-const API = process.env.SUBPOENA_API_URL ?? "http://localhost:8000";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const { key } = (await req.json()) as { key?: string };
@@ -14,17 +14,21 @@ export async function POST(req: Request) {
   if (!me.ok) {
     return Response.json({ error: "That key was rejected by the API" }, { status: 401 });
   }
-  (await cookies()).set("subpoena_key", key, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 12,
-  });
+  await setSession(key, 60 * 60 * 12);
   return Response.json(await me.json());
 }
 
 export async function DELETE() {
-  (await cookies()).delete("subpoena_key");
+  const jar = await cookies();
+  const current = jar.get(SESSION_COOKIE)?.value;
+  if (current?.startsWith("ss_")) {
+    // Revoke Google sessions server-side; API keys stay valid (they belong to the bank's systems).
+    await fetch(`${API}/v1/sessions/current`, {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${current}` },
+      cache: "no-store",
+    }).catch(() => undefined);
+  }
+  jar.delete(SESSION_COOKIE);
   return new Response(null, { status: 204 });
 }

@@ -1,14 +1,15 @@
-// Same-origin proxy to the Subpoena.ai API. The API key lives only in an httpOnly cookie.
+// Same-origin proxy to the Subpoena.ai API. The API key or Google session lives only in an httpOnly cookie.
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 
+import { API, SESSION_COOKIE } from "@/lib/server/auth";
+
 export const dynamic = "force-dynamic";
 
-const API = process.env.SUBPOENA_API_URL ?? "http://localhost:8000";
 const FORWARD = ["content-type", "accept", "idempotency-key"];
 
 async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const key = (await cookies()).get("subpoena_key")?.value;
+  const key = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!key) {
     return Response.json(
       { type: "about:blank", title: "Unauthorized", status: 401 },

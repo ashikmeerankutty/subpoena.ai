@@ -21,7 +21,7 @@ from starlette.routing import Mount, Route
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from subpoena_schemas import Agent
-from subpoena_store import MemoryStore, Store
+from subpoena_store import MemoryStore, PrecedentLibrary, Store, build_embedder
 
 from .config import McpSettings
 from .data import BigQueryData, DataSource, SeedData
@@ -63,10 +63,17 @@ def build_deps(settings: McpSettings, store: Store | None = None) -> McpDeps:
             witness,
             fallback=settings.twilio_message_fallback,
         )
+    embedder = build_embedder(
+        settings.embeddings,
+        settings.gcp_project,
+        settings.embedding_location,
+        settings.embedding_model,
+    )
     return McpDeps(
         data=data,
         store=store,
         witness=witness,
+        precedents=PrecedentLibrary(store, embedder, data.seed_precedents()),
         sim_swap_window=timedelta(days=settings.sim_swap_window_days),
         sim_swap_required=settings.sim_swap_required,
     )

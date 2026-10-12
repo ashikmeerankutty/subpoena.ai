@@ -16,12 +16,14 @@ import { OverrideModal } from "@/components/OverrideModal";
 import { PipelineGraph } from "@/components/PipelineGraph";
 import { PageHeader, Panel, useMe } from "@/components/Shell";
 import { PFraud, StatusBadge } from "@/components/StatusBadge";
+import { PrecedentTable } from "@/components/PrecedentTable";
+import { ReceiptCard } from "@/components/ReceiptCard";
 import { Transcript } from "@/components/Transcript";
 import { WitnessChat } from "@/components/WitnessChat";
 import { api, usePoll } from "@/lib/api";
 import { AGENTS } from "@/lib/agents";
 import { money, seconds, time, usd } from "@/lib/format";
-import type { AgentName, Evaluation, Page, PipelineEvent } from "@/lib/types";
+import type { AgentName, Evaluation, Page, PipelineEvent, Precedent } from "@/lib/types";
 
 const FINAL = ["RULED", "ESCALATED", "APPEALED"];
 
@@ -118,7 +120,7 @@ export default function CasePage() {
         </Box>
       ) : null}
       {ev.override ? (
-        <Box marginBottom="space60"><Callout variant="neutral"><CalloutHeading as="h3">Appealed by {ev.override.by}</CalloutHeading>
+        <Box marginBottom="space60"><Callout variant="neutral"><CalloutHeading as="h3">Overridden by {ev.override.by}</CalloutHeading>
           <CalloutText>{ev.override.previous_verdict} → {ev.override.verdict}: {ev.override.reason}</CalloutText></Callout></Box>
       ) : null}
 
@@ -199,14 +201,31 @@ export default function CasePage() {
                     <Text as="p" marginTop="space30">Confirms: <strong>{String(ev.testimony.claims.confirms_transaction)}</strong> · reason: {ev.testimony.claims.stated_reason ?? "—"}</Text>
                     <Text as="p">Witness auth: {ev.testimony.witness_auth_result} · received {time(ev.testimony.received_at)}</Text>
                     {ev.testimony.flagged_by_screening ? <Badge as="span" variant="error">Flagged: {ev.testimony.screening_reasons.join(", ")}</Badge> : null}
+                    {ev.testimony.receipt ? (
+                      <Box marginTop="space50">
+                        <ReceiptCard check={ev.testimony.receipt} expected={{
+                          merchant: ev.merchant, amount: ev.amount, currency: ev.currency, date: ev.occurred_at,
+                        }} />
+                      </Box>
+                    ) : null}
                   </> : <Text as="p" color="colorTextWeak">{ev.subpoena ? "Awaiting the witness." : "No subpoena was issued."}</Text>}
                 </Panel>
               </Box>
             </Box>
+            <SimilarCases evaluationId={ev.evaluation_id} />
           </TabPanel>
         </TabPanels>
       </Tabs>
       {ev && overrideOpen ? <OverrideModal ev={ev} open={overrideOpen} onClose={() => setOverrideOpen(false)} onDone={(e) => { setEv(e); reload(); }} /> : null}
     </>
+  );
+}
+
+function SimilarCases({ evaluationId }: { evaluationId: string }) {
+  const { data } = usePoll<{ data: Precedent[] }>(`evaluations/${evaluationId}/similar?limit=5`);
+  return (
+    <Panel title="Similar cases (precedents)">
+      {data?.data.length ? <PrecedentTable rows={data.data} /> : <Text as="p" color="colorTextWeak">{data ? "No similar precedents yet." : "Searching…"}</Text>}
+    </Panel>
   );
 }

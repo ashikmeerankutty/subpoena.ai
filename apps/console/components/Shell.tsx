@@ -4,6 +4,7 @@ import { Avatar } from "@twilio-paste/core/avatar";
 import { Badge } from "@twilio-paste/core/badge";
 import { Box } from "@twilio-paste/core/box";
 import { Button } from "@twilio-paste/core/button";
+import { Option, Select } from "@twilio-paste/core/select";
 import {
   Sidebar, SidebarBody, SidebarHeader, SidebarHeaderLabel, SidebarNavigation, SidebarNavigationItem,
   SidebarPushContentWrapper,
@@ -12,7 +13,11 @@ import { Text } from "@twilio-paste/core/text";
 import { Topbar, TopbarActions } from "@twilio-paste/core/topbar";
 import { ProductContactCenterTasksIcon } from "@twilio-paste/icons/esm/ProductContactCenterTasksIcon";
 import { ProductDebuggerIcon } from "@twilio-paste/icons/esm/ProductDebuggerIcon";
+import { ProductDestinationsIcon } from "@twilio-paste/icons/esm/ProductDestinationsIcon";
+import { ProductEventLibraryIcon } from "@twilio-paste/icons/esm/ProductEventLibraryIcon";
 import { ProductHomeIcon } from "@twilio-paste/icons/esm/ProductHomeIcon";
+import { ProductLogsIcon } from "@twilio-paste/icons/esm/ProductLogsIcon";
+import { ProductSettingsIcon } from "@twilio-paste/icons/esm/ProductSettingsIcon";
 import { ProductMessagingIcon } from "@twilio-paste/icons/esm/ProductMessagingIcon";
 import { ProductProtocolsIcon } from "@twilio-paste/icons/esm/ProductProtocolsIcon";
 import { ProductSourcesIcon } from "@twilio-paste/icons/esm/ProductSourcesIcon";
@@ -21,6 +26,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 import { api } from "@/lib/api";
 import type { Me } from "@/lib/types";
+import { LogoMark } from "./Logo";
 
 const MeContext = createContext<Me | null>(null);
 export const useMe = () => useContext(MeContext);
@@ -28,11 +34,17 @@ export const useMe = () => useContext(MeContext);
 const NAV = [
   { href: "/", label: "Overview", icon: ProductHomeIcon },
   { href: "/sources", label: "Sources", icon: ProductSourcesIcon },
+  { href: "/destinations", label: "Destinations", icon: ProductDestinationsIcon },
   { href: "/transactions", label: "Transactions", icon: ProductDebuggerIcon },
   { href: "/cases", label: "Cases", icon: ProductContactCenterTasksIcon },
   { href: "/subpoenas", label: "Subpoenas", icon: ProductMessagingIcon },
   { href: "/policies", label: "Policies", icon: ProductProtocolsIcon },
+  { href: "/precedents", label: "Precedents", icon: ProductEventLibraryIcon },
+  { href: "/audit-log", label: "Audit Log", icon: ProductLogsIcon },
+  { href: "/settings", label: "Settings", icon: ProductSettingsIcon },
 ];
+
+interface WorkspaceChoice { id: string; name: string; role: string }
 
 const IDS = { main: "main", nav: "nav", top: "topbar" };
 
@@ -40,10 +52,21 @@ export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
+  const [workspaces, setWorkspaces] = useState<WorkspaceChoice[]>([]);
 
   useEffect(() => {
     api<Me>("me").then(setMe).catch(() => router.replace("/login"));
   }, [router]);
+
+  useEffect(() => {
+    if (me?.principal?.type !== "MEMBER") return;
+    api<{ workspaces: WorkspaceChoice[] }>("sessions/current").then((s) => setWorkspaces(s.workspaces)).catch(() => undefined);
+  }, [me]);
+
+  async function switchTo(workspaceId: string) {
+    const res = await fetch("/api/session/switch", { method: "POST", body: JSON.stringify({ workspace_id: workspaceId }) });
+    if (res.ok) location.href = "/";
+  }
 
   async function signOut() {
     await fetch("/api/session", { method: "DELETE" });
@@ -58,7 +81,7 @@ export function Shell({ children }: { children: ReactNode }) {
         topbarSkipLinkID={IDS.top}>
         <SidebarHeader>
           <Box display="flex" alignItems="center" columnGap="space30">
-            <img src="/favicon.svg" alt="" width={28} height={28} />
+            <LogoMark size={28} />
             <SidebarHeaderLabel>Subpoena.ai</SidebarHeaderLabel>
           </Box>
         </SidebarHeader>
@@ -82,14 +105,26 @@ export function Shell({ children }: { children: ReactNode }) {
                 display="flex" alignItems="center" justifyContent="center">
                 <Text as="span" color="colorTextInverse" fontWeight="fontWeightBold" fontSize="fontSize30">◆</Text>
               </Box>
-              <Text as="span" fontWeight="fontWeightSemibold">{me?.workspace.name ?? "…"}</Text>
+              {workspaces.length > 1 && me ? (
+                <Box width="size30">
+                  <Select value={me.workspace.id} onChange={(e) => switchTo(e.target.value)} aria-label="Workspace">
+                    {workspaces.map((w) => <Option key={w.id} value={w.id}>{w.name}</Option>)}
+                  </Select>
+                </Box>
+              ) : (
+                <Text as="span" fontWeight="fontWeightSemibold">{me?.workspace.name ?? "…"}</Text>
+              )}
               {me ? <Badge as="span" variant="neutral" size="small">{me.role}</Badge> : null}
             </Box>
           </TopbarActions>
           <TopbarActions justify="end">
-            {me ? <Text as="span" color="colorTextWeak" fontSize="fontSize20">{me.key.name} · {me.key.prefix}…</Text> : null}
+            {me ? (
+              <Text as="span" color="colorTextWeak" fontSize="fontSize20">
+                {me.principal?.type === "MEMBER" ? me.principal.email : `${me.key.name} · ${me.key.prefix}…`}
+              </Text>
+            ) : null}
             <Button variant="link" onClick={signOut}>Sign out</Button>
-            <Avatar size="sizeIcon70" name={me?.key.name ?? "?"} />
+            <Avatar size="sizeIcon70" name={me?.principal?.name ?? me?.key.name ?? "?"} />
           </TopbarActions>
         </Topbar>
         <Box as="main" id={IDS.main} padding="space90" backgroundColor="colorBackground" minHeight="100vh">

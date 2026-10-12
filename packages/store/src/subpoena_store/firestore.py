@@ -11,6 +11,11 @@ Layout
   witness_messages/{message_id}          + ``_created_at`` timestamp
   verifications/{phone}                  simulated Verify codes (hash only)
   feedback/{id}
+  members/{member_id}                    queried by ``workspace_id`` or ``email``
+  workspaces/{workspace_id}/audit/{id}   append-only, ordered by ``at``
+  workspaces/{workspace_id}/destinations/{id}
+  workspaces/{workspace_id}/deliveries/{id}   delivery log, ordered by ``at``
+  workspaces/{workspace_id}/precedents/{id}   with its embedding (small library, scanned)
 
 Documents are stored in Pydantic's JSON mode (Decimals and datetimes as strings), so
 reading back is a plain ``model_validate``. Fields used in queries get native copies.
@@ -28,9 +33,14 @@ from google.cloud import firestore
 
 from subpoena_schemas import (
     ApiKey,
+    AuditEntry,
+    Delivery,
+    Destination,
     Evaluation,
+    Member,
     PipelineEvent,
     Policy,
+    Precedent,
     Subpoena,
     SubpoenaState,
     WitnessMessage,
@@ -361,3 +371,111 @@ class FirestoreStore:
     async def put_feedback(self, workspace_id: str, record: dict[str, Any]) -> None:
         data = {"workspace_id": workspace_id, "created_at": utcnow(), **record}
         await self._db.collection("feedback").document(new_id("fb")).set(data)
+
+    # Members -----------------------------------------------------------------------------
+
+    async def put_member(self, member: Member) -> None:
+        await self._db.collection("members").document(member.id).set(_doc(member))
+
+    async def get_member(self, workspace_id: str, member_id: str) -> Member | None:
+        snap = await self._db.collection("members").document(member_id).get()
+        if not snap.exists:
+            return None
+        m = Member.model_validate(snap.to_dict())
+        return m if m.workspace_id == workspace_id else None
+
+    async def list_members(self, workspace_id: str) -> list[Member]:
+        query = self._db.collection("members").where(
+            filter=firestore.FieldFilter("workspace_id", "==", workspace_id)
+        )
+        rows = [Member.model_validate(s.to_dict()) async for s in query.stream()]
+        return sorted(rows, key=lambda m: m.created_at)
+
+    async def find_members_by_email(self, email: str) -> list[Member]:
+        query = self._db.collection("members").where(
+            filter=firestore.FieldFilter("email", "==", email.lower())
+        )
+        return [Member.model_validate(s.to_dict()) async for s in query.stream()]
+
+    async def delete_member(self, workspace_id: str, member_id: str) -> None:
+        if await self.get_member(workspace_id, member_id):
+            await self._db.collection("members").document(member_id).delete()
+
+    # Audit log ---------------------------------------------------------------------------
+
+    def _audit(self, workspace_id: str) -> firestore.AsyncCollectionReference:
+        col: firestore.AsyncCollectionReference = (
+            self._db.collection("workspaces").document(workspace_id).collection("audit")
+        )
+        return col
+
+    async def append_audit(self, entry: AuditEntry) -> None:
+        # ``create`` refuses to overwrite: entries are never edited.
+        data = _doc(entry) | {"_at": entry.at}
+        await self._audit(entry.workspace_id).document(entry.id).create(data)
+
+    async def list_audit(self, workspace_id: str, limit: int) -> list[AuditEntry]:
+        query = (
+            self._audit(workspace_id)
+            .order_by("_at", direction=firestore.Query.DESCENDING)
+            .limit(limit)
+        )
+        return [AuditEntry.model_validate(_strip(s.to_dict())) async for s in query.stream()]
+
+    # Destinations & delivery log ---------------------------------------------------------
+
+    def _ws_col(self, workspace_id: str, name: str) -> firestore.AsyncCollectionReference:
+        col: firestore.AsyncCollectionReference = (
+            self._db.collection("workspaces").document(workspace_id).collection(name)
+        )
+        return col
+
+    async def put_destination(self, dest: Destination) -> None:
+        await self._ws_col(dest.workspace_id, "destinations").document(dest.id).set(_doc(dest))
+
+    async def get_destination(self, workspace_id: str, destination_id: str) -> Destination | None:
+        snap = await self._ws_col(workspace_id, "destinations").document(destination_id).get()
+        return Destination.model_validate(snap.to_dict()) if snap.exists else None
+
+    async def list_destinations(self, workspace_id: str) -> list[Destination]:
+        rows = [
+            Destination.model_validate(s.to_dict())
+            async for s in self._ws_col(workspace_id, "destinations").stream()
+        ]
+        return sorted(rows, key=lambda d: d.created_at)
+
+    async def delete_destination(self, workspace_id: str, destination_id: str) -> None:
+        await self._ws_col(workspace_id, "destinations").document(destination_id).delete()
+
+    async def append_delivery(self, delivery: Delivery) -> None:
+        data = _doc(delivery) | {"_at": delivery.at}
+        await self._ws_col(delivery.workspace_id, "deliveries").document(delivery.id).set(data)
+
+    async def list_deliveries(self, workspace_id: str, limit: int) -> list[Delivery]:
+        query = (
+            self._ws_col(workspace_id, "deliveries")
+            .order_by("_at", direction=firestore.Query.DESCENDING)
+            .limit(limit)
+        )
+        return [Delivery.model_validate(_strip(s.to_dict())) async for s in query.stream()]
+
+    # Precedents ----------------------------------------------------------------------------
+
+    async def put_precedent(self, precedent: Precedent) -> None:
+        assert precedent.workspace_id
+        col = self._ws_col(precedent.workspace_id, "precedents")
+        await col.document(precedent.id).set(_doc(precedent))
+
+    async def get_precedent(self, workspace_id: str, precedent_id: str) -> Precedent | None:
+        snap = await self._ws_col(workspace_id, "precedents").document(precedent_id).get()
+        return Precedent.model_validate(snap.to_dict()) if snap.exists else None
+
+    async def list_precedents(self, workspace_id: str) -> list[Precedent]:
+        rows = [
+            Precedent.model_validate(s.to_dict())
+            async for s in self._ws_col(workspace_id, "precedents").stream()
+        ]
+        return sorted(rows, key=lambda p: p.created_at, reverse=True)
+
+    async def delete_precedent(self, workspace_id: str, precedent_id: str) -> None:
+        await self._ws_col(workspace_id, "precedents").document(precedent_id).delete()

@@ -7,10 +7,15 @@ from typing import Any
 
 from subpoena_schemas import (
     ApiKey,
+    AuditEntry,
+    Delivery,
     DeliveryStatus,
+    Destination,
     Evaluation,
+    Member,
     PipelineEvent,
     Policy,
+    Precedent,
     Subpoena,
     SubpoenaState,
     WitnessMessage,
@@ -34,6 +39,11 @@ class MemoryStore:
         self._messages: list[WitnessMessage] = []
         self._verifications: dict[str, Verification] = {}
         self.feedback: list[dict[str, Any]] = []
+        self._members: dict[str, Member] = {}
+        self._audit: list[AuditEntry] = []
+        self._destinations: dict[str, Destination] = {}
+        self._deliveries: list[Delivery] = []
+        self._precedents: dict[str, Precedent] = {}
         self._lock = asyncio.Lock()
 
     async def put_workspace(self, ws: Workspace) -> None:
@@ -174,3 +184,66 @@ class MemoryStore:
 
     async def put_feedback(self, workspace_id: str, record: dict[str, Any]) -> None:
         self.feedback.append({"workspace_id": workspace_id, **record})
+
+    async def put_member(self, member: Member) -> None:
+        self._members[member.id] = member
+
+    async def get_member(self, workspace_id: str, member_id: str) -> Member | None:
+        m = self._members.get(member_id)
+        return m if m and m.workspace_id == workspace_id else None
+
+    async def list_members(self, workspace_id: str) -> list[Member]:
+        rows = [m for m in self._members.values() if m.workspace_id == workspace_id]
+        return sorted(rows, key=lambda m: m.created_at)
+
+    async def find_members_by_email(self, email: str) -> list[Member]:
+        return [m for m in self._members.values() if m.email == email.lower()]
+
+    async def delete_member(self, workspace_id: str, member_id: str) -> None:
+        if await self.get_member(workspace_id, member_id):
+            del self._members[member_id]
+
+    async def append_audit(self, entry: AuditEntry) -> None:
+        self._audit.append(entry)
+
+    async def list_audit(self, workspace_id: str, limit: int) -> list[AuditEntry]:
+        rows = [a for a in self._audit if a.workspace_id == workspace_id]
+        return sorted(rows, key=lambda a: a.at, reverse=True)[:limit]
+
+    async def put_destination(self, dest: Destination) -> None:
+        self._destinations[dest.id] = dest
+
+    async def get_destination(self, workspace_id: str, destination_id: str) -> Destination | None:
+        d = self._destinations.get(destination_id)
+        return d if d and d.workspace_id == workspace_id else None
+
+    async def list_destinations(self, workspace_id: str) -> list[Destination]:
+        rows = [d for d in self._destinations.values() if d.workspace_id == workspace_id]
+        return sorted(rows, key=lambda d: d.created_at)
+
+    async def delete_destination(self, workspace_id: str, destination_id: str) -> None:
+        if await self.get_destination(workspace_id, destination_id):
+            del self._destinations[destination_id]
+
+    async def append_delivery(self, delivery: Delivery) -> None:
+        self._deliveries.append(delivery)
+
+    async def list_deliveries(self, workspace_id: str, limit: int) -> list[Delivery]:
+        rows = [d for d in self._deliveries if d.workspace_id == workspace_id]
+        return sorted(rows, key=lambda d: d.at, reverse=True)[:limit]
+
+    async def put_precedent(self, precedent: Precedent) -> None:
+        assert precedent.workspace_id
+        self._precedents[precedent.id] = precedent
+
+    async def get_precedent(self, workspace_id: str, precedent_id: str) -> Precedent | None:
+        p = self._precedents.get(precedent_id)
+        return p if p and p.workspace_id == workspace_id else None
+
+    async def list_precedents(self, workspace_id: str) -> list[Precedent]:
+        rows = [p for p in self._precedents.values() if p.workspace_id == workspace_id]
+        return sorted(rows, key=lambda p: p.created_at, reverse=True)
+
+    async def delete_precedent(self, workspace_id: str, precedent_id: str) -> None:
+        if await self.get_precedent(workspace_id, precedent_id):
+            del self._precedents[precedent_id]

@@ -19,11 +19,11 @@ and their reply is admitted as screened, structured testimony. Everything is str
 | Path | What |
 | :--- | :--- |
 | `packages/schemas` | Pydantic schemas shared by every service, agent structured outputs, and the decision policy (`decide`, `decide_after_testimony`). JSON Schema exports in `packages/schemas/json`. |
-| `packages/store` | One `Store` protocol with in-memory and Firestore implementations (contract-tested on both). |
+| `packages/store` | One `Store` protocol with in-memory and Firestore implementations (contract-tested on both), the witness-photo media store and the embedding-based precedent library. |
 | `apps/api` | FastAPI: API keys, idempotency, RFC 9457 errors, Tier 0 pre-screen, evaluations, SSE event stream, overrides, Twilio webhooks, witness simulator, Console read models, signed outbound webhooks. |
 | `apps/mcp-server` | MCP server (official SDK v2): resources and tools per Spec §7, one endpoint per agent so the allow-list is enforced by construction; Twilio or simulator witness channel. |
 | `apps/agents` | The courtroom: ADK `LlmAgent`s on Vertex AI Gemini with response schemas, debate protocol with citation striking, Bailiff, testimony screening, re-ruling, timeouts; Cloud Run worker for Pub/Sub push and Cloud Tasks. |
-| `apps/console` | Courthouse Console: Next.js + Twilio Paste, Segment-style. Overview, Sources, Transactions (live debugger), Cases, Pipeline view (React Flow graph, live SSE transcript, replay), Subpoenas (mirrored WhatsApp + phone simulator), Policies (simulate + publish). |
+| `apps/console` | Courthouse Console: Next.js + Twilio Paste, Segment-style, Google sign-in or API key. Overview, Sources, Destinations (webhook/Slack/Pub/Sub/BigQuery + delivery log), Transactions (live debugger), Cases, Pipeline view (React Flow graph, live SSE transcript, replay, receipt evidence, similar cases), Subpoenas (mirrored WhatsApp + phone simulator with photo upload), Policies (simulate + publish), Precedents (semantic search), Audit Log, Settings (members, roles, PII masking). |
 | `data/seed` | Deterministic synthetic users, 90 days of transactions, baselines, entity graph with a mule ring, IP intel, merchant registry, precedents and the demo scenarios. |
 | `infra/gcp` | `deploy.sh` (idempotent gcloud deployment) and Cloud Build config. |
 | `infra/cost-guard` | Optional billing kill switch (budget → Pub/Sub → function that unlinks billing). |

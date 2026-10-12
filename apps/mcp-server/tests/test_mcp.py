@@ -80,7 +80,7 @@ def test_resources(stack) -> None:
                 await s.read("user_profile://usr_9921/baselines"),
                 await s.read("transactions://usr_9921/recent"),
                 await s.read("graph://198.51.100.66/neighbors"),
-                await s.read("precedents://search/auto parts new device night"),
+                await s.read("precedents://ws_x/search/auto parts new device night"),
                 await s.read("policy://ws_x/active"),
             )
 
@@ -89,7 +89,8 @@ def test_resources(stack) -> None:
     assert len(recent["transactions"]) == 50
     assert recent["transactions"][0]["occurred_at"] > recent["transactions"][-1]["occurred_at"]
     assert graph["flag"] == "MULE_LINKED" and {n["flag"] for n in graph["neighbors"]} == {"MULE"}
-    assert precedents["precedents"][0]["id"] == "P1"
+    assert precedents["precedents"][0]["id"] == "seed_P1"
+    assert 0 < precedents["precedents"][0]["similarity"] <= 1
     assert policy["thresholds"] == {"approve_max": 0.15, "block_min": 0.85}
 
 

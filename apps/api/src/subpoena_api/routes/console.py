@@ -8,22 +8,25 @@ from datetime import timedelta
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import ValidationError
 
 from subpoena_schemas import (
     ApiKey,
     ApiKeyPublic,
     EvaluationResponse,
     EvaluationStatus,
+    KeyKind,
     Policy,
     Scope,
     Tier0Route,
     Verdict,
     decide,
+    role_for,
     utcnow,
 )
 from subpoena_store import EvaluationFilters
 
-from ..deps import ServicesDep, active_policy, require
+from ..deps import ServicesDep, active_policy, audit, require
 from ..problems import ProblemError
 from ..webhooks import workspace_secret
 
@@ -37,17 +40,17 @@ STATS_WINDOW_LIMIT = 2000
 @router.get("/me")
 async def me(key: ReadKey, services: ServicesDep) -> dict[str, Any]:
     ws = await services.store.get_workspace(key.workspace_id)
-    role = (
-        "ADMIN"
-        if Scope.ADMIN in key.scopes
-        else "ANALYST"
-        if Scope.EVALUATIONS_OVERRIDE in key.scopes
-        else "VIEWER"
-    )
+    session = key.kind is KeyKind.SESSION
     return {
         "workspace": ws.model_dump(mode="json") if ws else {"id": key.workspace_id},
         "key": ApiKeyPublic.from_key(key).model_dump(mode="json"),
-        "role": role,
+        "role": role_for(key.scopes),
+        "principal": {
+            "type": "MEMBER" if session else "API_KEY",
+            "name": key.name,
+            "email": key.name if session else None,
+            "expires_at": key.expires_at.isoformat() if key.expires_at else None,
+        },
         "simulator": services.settings.witness_simulator,
     }
 
@@ -170,7 +173,11 @@ async def sources(key: AdminKey, services: ServicesDep) -> dict[str, Any]:
     base = services.settings.public_base_url.rstrip("/")
     return {
         "api_base_url": f"{base}/v1",
-        "api_keys": [ApiKeyPublic.from_key(k).model_dump(mode="json") for k in keys],
+        "api_keys": [
+            ApiKeyPublic.from_key(k).model_dump(mode="json")
+            for k in keys
+            if k.kind is KeyKind.API_KEY
+        ],
         "webhook_signing_secret": workspace_secret(
             services.settings.webhook_signing_secret.get_secret_value(), key.workspace_id
         ),
@@ -211,7 +218,7 @@ async def publish_policy(
     body: dict[str, Any], key: AdminKey, services: ServicesDep
 ) -> dict[str, Any]:
     current = await active_policy(services, key.workspace_id)
-    draft = Policy.model_validate(
+    draft = _policy(
         {
             **current.model_dump(mode="json"),
             **body,
@@ -222,7 +229,30 @@ async def publish_policy(
         }
     )
     await services.store.put_policy(draft)
+    changed = {
+        k: v
+        for k, v in draft.model_dump(mode="json", exclude={"id", "version", "created_at"}).items()
+        if current.model_dump(mode="json").get(k) != v
+    }
+    await audit(
+        services,
+        key,
+        "policy.published",
+        f"v{draft.version}",
+        before={k: current.model_dump(mode="json").get(k) for k in changed},
+        after=changed,
+    )
     return draft.model_dump(mode="json")
+
+
+def _policy(data: dict[str, Any]) -> Policy:
+    try:
+        return Policy.model_validate(data)
+    except ValidationError as exc:
+        errors = [{"loc": list(e["loc"]), "msg": e["msg"], "type": e["type"]} for e in exc.errors()]
+        raise ProblemError(
+            422, "validation-error", f"{len(errors)} policy field(s) are invalid", errors=errors
+        ) from exc
 
 
 @router.post("/policies/simulate")
@@ -234,9 +264,7 @@ async def simulate_policy(
 ) -> dict[str, Any]:
     """Replay recent courtroom rulings under a draft policy (Spec §10 Policies → Simulate)."""
     current = await active_policy(services, key.workspace_id)
-    draft = Policy.model_validate(
-        {**current.model_dump(mode="json"), **body, "workspace_id": key.workspace_id}
-    )
+    draft = _policy({**current.model_dump(mode="json"), **body, "workspace_id": key.workspace_id})
     evs = await services.store.list_evaluations(key.workspace_id, EvaluationFilters(), limit, None)
     ruled = [
         e for e in evs if e.p_fraud is not None and e.tier0 and e.tier0.route is Tier0Route.COURT

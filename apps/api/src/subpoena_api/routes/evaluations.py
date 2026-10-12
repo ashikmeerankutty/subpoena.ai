@@ -25,14 +25,16 @@ from subpoena_schemas import (
     Page,
     PageMeta,
     PipelineEvent,
+    Precedent,
+    PrecedentSource,
     Scope,
     Tier0Route,
     Verdict,
     utcnow,
 )
-from subpoena_store import EvaluationFilters, IdempotencyRecord
+from subpoena_store import EvaluationFilters, IdempotencyRecord, precedent_for
 
-from ..deps import Services, ServicesDep, active_policy, require
+from ..deps import Services, ServicesDep, active_policy, audit, require
 from ..pagination import decode_cursor, encode_cursor
 from ..problems import ProblemError
 from ..tier0 import prescreen
@@ -303,6 +305,20 @@ async def override(
                 "reason": body.reason,
             },
         )
+    # The corrected ruling replaces the case's precedent (a HOLD is no precedent at all).
+    corrected = precedent_for(ev, PrecedentSource.OVERRIDE)
+    if corrected is not None:
+        await services.store.put_precedent(corrected)
+    else:
+        await services.store.delete_precedent(key.workspace_id, Precedent.id_for(evaluation_id))
+    await audit(
+        services,
+        key,
+        "evaluation.overridden",
+        evaluation_id,
+        before={"verdict": record["previous_verdict"], "status": record["previous_status"]},
+        after={"verdict": body.verdict, "status": EvaluationStatus.APPEALED, "reason": body.reason},
+    )
     await services.notifier.notify(
         ev,
         "evaluation.overridden",

@@ -37,7 +37,7 @@ export default function CasesPage() {
             <Option value="escalated">Escalated (analyst queue)</Option>
             <Option value="blocked">Blocked</Option>
             <Option value="approved">Approved</Option>
-            <Option value="appealed">Appealed</Option>
+            <Option value="appealed">Overridden by analyst</Option>
           </Select>
         </Box>}>
         <div className="clickable-rows"><Table scrollHorizontally>

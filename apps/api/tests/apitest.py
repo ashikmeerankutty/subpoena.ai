@@ -18,7 +18,7 @@ from subpoena_api.routes.api_keys import issue_key
 from subpoena_api.settings import Settings
 from subpoena_api.webhooks import BankNotifier
 from subpoena_schemas import Policy, Scope, Workspace
-from subpoena_store import MemoryStore, Store
+from subpoena_store import HashEmbedder, MemoryStore, PrecedentLibrary, Store
 
 SETTINGS = Settings(env="test", publisher="memory", sync_wait_max_ms=0)
 SCENARIOS: dict[str, dict[str, Any]] = {
@@ -71,6 +71,11 @@ def _env() -> Iterator[Env]:
 
     async def setup() -> tuple[str, str, str, str, str]:
         services.store = make_store()
+        services.precedents = PrecedentLibrary(
+            services.store,
+            HashEmbedder(),
+            json.loads((SETTINGS.seed_dir / "precedents.json").read_text()),
+        )
         ws, other = Workspace(name="Acme Bank"), Workspace(name="Other Bank")
         for w in (ws, other):
             await services.store.put_workspace(w)

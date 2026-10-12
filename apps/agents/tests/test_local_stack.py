@@ -69,6 +69,7 @@ def test_full_subpoena_flow_over_http(monkeypatch) -> None:
             "subpoena_id": sub["id"],
             "code_received": True,
             "text_received": True,
+            "photos_received": 0,
         }
         done = wait_for(c, ev["evaluation_id"], "RULED")
         assert done["verdict"] == "APPROVE" and done["testimony"]["claims"]["confirms_transaction"]
@@ -134,3 +135,86 @@ def test_outbound_webhook_signature_roundtrip() -> None:
     body = b'{"type":"evaluation.completed"}'
     assert verify(secret, body, sign(secret, body))
     assert not verify(secret, body + b" ", sign(secret, body))
+
+
+def test_receipt_photo_over_http(monkeypatch) -> None:
+    import base64
+
+    with client(monkeypatch) as c:
+        ev = post(c, "auto_parts_deadlock", "e2e-photo").json()
+        sub = c.get(f"/v1/subpoenas/{ev['subpoena']['id']}", headers=H).json()
+        code = next(
+            m["body"].split("code is ")[1][:6] for m in sub["messages"] if "code is" in m["body"]
+        )
+        assert "photo of the receipt" in sub["messages"][0]["body"]
+        # A WhatsApp photo with a caption: text, code and receipt arrive together.
+        photo = json.dumps({"merchant": "AutoZone", "amount": "4500.00"}).encode()
+        r = c.post(
+            "/v1/simulator/witness-reply",
+            headers=H,
+            json={
+                "phone": "+14155550123",
+                "body": f"Yes, parts for my BMW E36 project {code}",
+                "photos": [
+                    {"content_type": "image/png", "data_base64": base64.b64encode(photo).decode()}
+                ],
+            },
+        )
+        assert r.json()["photos_received"] == 1
+        done = wait_for(c, ev["evaluation_id"], "RULED")
+        assert done["verdict"] == "APPROVE"
+        assert done["testimony"]["receipt"]["result"] == "MATCH"
+
+        media_id = done["testimony"]["receipt"]["media_id"]
+        img = c.get(f"/v1/media/{media_id}", headers=H)
+        assert img.status_code == 200 and img.content == photo
+        assert img.headers["content-type"] == "image/png"
+        msgs = c.get(f"/v1/subpoenas/{sub['id']}", headers=H).json()["messages"]
+        assert any(m["media"] and m["media"][0]["id"] == media_id for m in msgs)
+        assert c.get("/v1/media/med_doesnotexist", headers=H).status_code == 404
+
+        bad = c.post(
+            "/v1/simulator/witness-reply",
+            headers=H,
+            json={
+                "phone": "+14155550123",
+                "photos": [{"content_type": "image/png", "data_base64": "@@@"}],
+            },
+        )
+        assert bad.status_code == 422
+        empty = c.post("/v1/simulator/witness-reply", headers=H, json={"phone": "+14155550123"})
+        assert empty.status_code == 422
+
+
+def test_twilio_photo_is_downloaded_from_twilio_only(monkeypatch) -> None:
+    import httpx
+
+    fetched: list[str] = []
+    real_get = httpx.AsyncClient.get
+
+    async def fake_get(self, url, *a, **kw):  # type: ignore[no-untyped-def]
+        if str(url).startswith("https://api.twilio.com/"):
+            fetched.append(str(url))
+            return httpx.Response(200, content=b'{"merchant": "AutoZone", "amount": "4500"}')
+        return await real_get(self, url, *a, **kw)
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
+    with client(monkeypatch, twilio_account_sid="ACtest") as c:
+        ev = post(c, "auto_parts_deadlock", "e2e-twilio-photo").json()
+        params = {
+            "From": "whatsapp:+14155550123",
+            "Body": "Yes, my BMW project",
+            "MessageSid": "SMx",
+            "NumMedia": "2",
+            "MediaUrl0": "https://api.twilio.com/2010-04-01/Accounts/ACtest/Messages/MMx/Media/ME1",
+            "MediaContentType0": "image/jpeg",
+            "MediaUrl1": "https://evil.example/steal",
+            "MediaContentType1": "image/jpeg",
+        }
+        url = "https://api.example.com/v1/webhooks/twilio/inbound"
+        sig = twilio_signature("tw_test_token", url, params)
+        r = c.post("/v1/webhooks/twilio/inbound", data=params, headers={"X-Twilio-Signature": sig})
+        assert r.status_code == 200
+        assert fetched == [params["MediaUrl0"]]
+        sub = c.get(f"/v1/subpoenas/{ev['subpoena']['id']}", headers=H).json()
+        assert len(sub["media"]) == 1 and sub["media"][0]["source"] == "twilio"

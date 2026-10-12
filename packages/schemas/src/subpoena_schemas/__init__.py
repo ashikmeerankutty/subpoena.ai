@@ -1,6 +1,15 @@
 """Shared schemas: the single source of truth for API payloads, agent outputs and storage."""
 
-from .agents import ArgumentOut, ClaimOut, ExpertFindingOut, ExpertReport, ExplanationOut, RulingOut
+from .agents import (
+    ArgumentOut,
+    ClaimOut,
+    ExpertFindingOut,
+    ExpertReport,
+    ExplanationOut,
+    ReceiptOut,
+    RulingOut,
+)
+from .audit import Actor, ActorType, AuditEntry
 from .baseline import GeoPoint, UserBaseline
 from .common import (
     Agent,
@@ -13,6 +22,8 @@ from .common import (
     new_id,
     utcnow,
 )
+from .destination import EVENT_TYPES, Delivery, Destination, DestinationType
+from .destination import DeliveryStatus as DestinationDeliveryStatus
 from .evaluation import (
     DebateSummaryItem,
     Evaluation,
@@ -37,9 +48,13 @@ from .policy import (
     decide,
     decide_after_testimony,
 )
+from .precedent import Precedent, PrecedentSource
 from .subpoena import (
     DeliveryStatus,
+    MediaRef,
     MessageDirection,
+    ReceiptCheck,
+    ReceiptResult,
     Subpoena,
     SubpoenaRef,
     SubpoenaState,
@@ -56,20 +71,42 @@ from .transaction import (
     TransactionMetadata,
     Witness,
 )
-from .workspace import ApiKey, ApiKeyCreated, ApiKeyPublic, Scope, Source, SourceType, Workspace
+from .workspace import (
+    ROLE_SCOPES,
+    ApiKey,
+    ApiKeyCreated,
+    ApiKeyPublic,
+    KeyKind,
+    Member,
+    Scope,
+    Source,
+    SourceType,
+    Workspace,
+    WorkspaceSettings,
+    role_for,
+)
 
 __all__ = [
+    "EVENT_TYPES",
+    "ROLE_SCOPES",
+    "Actor",
+    "ActorType",
     "Agent",
     "ApiKey",
     "ApiKeyCreated",
     "ApiKeyPublic",
     "ArgumentOut",
+    "AuditEntry",
     "Channel",
     "Claim",
     "ClaimOut",
     "DebateSummaryItem",
     "Decision",
+    "Delivery",
     "DeliveryStatus",
+    "Destination",
+    "DestinationDeliveryStatus",
+    "DestinationType",
     "Evaluation",
     "EvaluationOptions",
     "EvaluationRequest",
@@ -82,7 +119,10 @@ __all__ = [
     "ExplanationOut",
     "GeoPoint",
     "HardRules",
+    "KeyKind",
     "Links",
+    "MediaRef",
+    "Member",
     "Merchant",
     "MessageDirection",
     "Model",
@@ -91,6 +131,11 @@ __all__ = [
     "PageMeta",
     "PipelineEvent",
     "Policy",
+    "Precedent",
+    "PrecedentSource",
+    "ReceiptCheck",
+    "ReceiptOut",
+    "ReceiptResult",
     "Role",
     "RulingOut",
     "Scope",
@@ -118,8 +163,10 @@ __all__ = [
     "WitnessAuthResult",
     "WitnessMessage",
     "Workspace",
+    "WorkspaceSettings",
     "decide",
     "decide_after_testimony",
     "new_id",
+    "role_for",
     "utcnow",
 ]

@@ -1,21 +1,39 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import timedelta
+from typing import Any
 
 from fastapi import FastAPI
 
 from subpoena_schemas import ApiKey, Policy, Scope, Workspace
-from subpoena_store import MemoryStore, Store
+from subpoena_store import (
+    MemoryStore,
+    PrecedentLibrary,
+    Store,
+    build_embedder,
+    build_media_store,
+)
 
 from . import problems
 from .baselines import BaselineSource, FirestoreBaselines, SeedBaselines
-from .deps import Services
+from .deps import GoogleVerifier, Services
+from .pii import MaskPiiMiddleware
 from .publisher import LogPublisher, MemoryPublisher, Publisher, PubSubPublisher
-from .routes import api_keys, console, evaluations, twilio
+from .routes import (
+    api_keys,
+    console,
+    destinations,
+    evaluations,
+    members,
+    precedents,
+    sessions,
+    twilio,
+)
 from .routes.api_keys import issue_key
 from .security import display_prefix, hash_secret
 from .settings import Settings, get_settings
@@ -53,10 +71,51 @@ def build_services(settings: Settings) -> Services:
         baselines = FirestoreBaselines(settings.gcp_project, settings.firestore_database)
     else:
         baselines = SeedBaselines(settings.seed_dir)
-    notifier = BankNotifier(settings.webhook_signing_secret.get_secret_value())
-    return Services(
-        settings=settings, store=store, publisher=publisher, baselines=baselines, notifier=notifier
+    notifier = BankNotifier(
+        settings.webhook_signing_secret.get_secret_value(),
+        store=store,
+        console_url=settings.console_public_url,
+        project=settings.gcp_project,
     )
+    return Services(
+        settings=settings,
+        store=store,
+        publisher=publisher,
+        baselines=baselines,
+        notifier=notifier,
+        google_verifier=google_verifier(settings.google_client_id)
+        if settings.google_client_id
+        else None,
+        media=build_media_store(settings.media_store, settings.media_bucket, settings.gcp_project),
+        precedents=PrecedentLibrary(
+            store,
+            build_embedder(
+                settings.embeddings,
+                settings.gcp_project,
+                settings.embedding_location,
+                settings.embedding_model,
+            ),
+            json.loads((settings.seed_dir / "precedents.json").read_text()),
+        ),
+    )
+
+
+def google_verifier(client_id: str) -> GoogleVerifier:
+    """Checks signature (Google's published keys), issuer, expiry and audience."""
+    import asyncio
+
+    from google.auth.transport import requests as google_requests
+    from google.oauth2 import id_token
+
+    transport = google_requests.Request()
+
+    async def verify(token: str) -> dict[str, Any]:
+        claims: dict[str, Any] = await asyncio.to_thread(
+            id_token.verify_oauth2_token, token, transport, client_id
+        )
+        return claims
+
+    return verify
 
 
 def create_app(services: Services | None = None, *, bootstrap_local: bool = False) -> FastAPI:
@@ -74,9 +133,14 @@ def create_app(services: Services | None = None, *, bootstrap_local: bool = Fals
     )
     app.state.services = services or build_services(get_settings())
     problems.install(app)
+    app.add_middleware(MaskPiiMiddleware)
     app.include_router(evaluations.router)
     app.include_router(api_keys.router)
     app.include_router(console.router)
+    app.include_router(members.router)
+    app.include_router(destinations.router)
+    app.include_router(precedents.router)
+    app.include_router(sessions.router)
     app.include_router(twilio.router)
 
     @app.get("/healthz", include_in_schema=False)

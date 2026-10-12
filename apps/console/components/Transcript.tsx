@@ -5,9 +5,10 @@ import { Box } from "@twilio-paste/core/box";
 import { Text } from "@twilio-paste/core/text";
 import { useEffect, useRef, type ReactNode } from "react";
 
+import { ReceiptCard } from "@/components/ReceiptCard";
 import { AGENTS } from "@/lib/agents";
 import { money, time } from "@/lib/format";
-import type { Finding, PipelineEvent } from "@/lib/types";
+import type { Finding, PipelineEvent, ReceiptCheck } from "@/lib/types";
 
 const SEV: Record<string, "neutral" | "info" | "warning" | "error" | "decorative20"> = {
   INFO: "neutral", LOW: "info", MEDIUM: "warning", HIGH: "error", CRITICAL: "error",
@@ -97,6 +98,10 @@ function Body({ e, findings }: { e: PipelineEvent; findings: Map<string, Finding
         {p.flagged ? <Box marginBottom="space30"><Badge as="span" variant="error" size="small">Flagged by {p.screening?.engine}: {p.screening?.reasons?.join(", ")}</Badge></Box> : null}
         <Details summary="structured claims (tool-less extractor)" value={p.claims} />
       </>;
+    case "EVIDENCE":
+      return p.kind === "receipt"
+        ? <><Text as="p" fontSize="fontSize20" color="colorTextWeak" marginBottom="space20">Receipt photo read by Gemini vision, compared by code</Text><ReceiptCard check={p as ReceiptCheck} /></>
+        : <Details summary="evidence" value={p} />;
     case "VERDICT":
       return <>
         <Box display="flex" columnGap="space30" alignItems="center" marginBottom="space20">

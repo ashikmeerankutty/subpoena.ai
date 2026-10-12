@@ -27,6 +27,8 @@ export interface Testimony {
   claims: { confirms_transaction: boolean | null; stated_reason: string | null; mentions_travel: boolean; sentiment: string | null };
   witness_auth_result: string;
   flagged_by_screening: boolean;
+  media_refs?: string[];
+  receipt?: ReceiptCheck | null;
   screening_reasons: string[];
   received_at: string;
 }
@@ -55,6 +57,7 @@ export interface Evaluation {
   amount: string;
   currency: string;
   merchant: string;
+  occurred_at: string;
 }
 
 export interface PipelineEvent {
@@ -72,6 +75,22 @@ export interface PipelineEvent {
   created_at: string;
 }
 
+export interface MediaRef { id: string; content_type: string; size_bytes: number; source: string }
+
+export interface ReceiptCheck {
+  media_id: string;
+  result: "MATCH" | "PARTIAL" | "MISMATCH" | "NOT_A_RECEIPT" | "UNREADABLE";
+  merchant: string | null;
+  amount: string | null;
+  currency: string | null;
+  date: string | null;
+  order_reference: string | null;
+  merchant_match: boolean | null;
+  amount_match: boolean | null;
+  date_match: boolean | null;
+  reasons: string[];
+}
+
 export interface WitnessMessage {
   id: string;
   phone: string;
@@ -79,6 +98,7 @@ export interface WitnessMessage {
   channel: string;
   body: string;
   status: string;
+  media?: MediaRef[];
   created_at: string;
 }
 
@@ -107,9 +127,45 @@ export interface Page<T> {
   meta: { next_page_token: string | null };
 }
 
+export type Role = "ADMIN" | "ANALYST" | "VIEWER";
+
 export interface Me {
-  workspace: { id: string; name: string };
+  workspace: { id: string; name: string; settings?: { pii_masking: boolean } };
   key: { id: string; name: string; prefix: string; scopes: string[] };
-  role: "ADMIN" | "ANALYST" | "VIEWER";
+  role: Role;
+  principal: { type: "MEMBER" | "API_KEY"; name: string; email: string | null; expires_at: string | null };
   simulator: boolean;
+}
+
+export interface Member {
+  id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  added_by: string | null;
+  created_at: string;
+  last_login_at: string | null;
+}
+
+export interface AuditEntry {
+  id: string;
+  actor: { type: "API_KEY" | "MEMBER" | "SYSTEM"; id: string | null; name: string };
+  action: string;
+  target: string | null;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  at: string;
+}
+
+export interface Precedent {
+  id: string;
+  summary: string;
+  verdict: string;
+  label: "FRAUD" | "LEGIT";
+  tags: string[];
+  source: "SEED" | "CASE" | "OVERRIDE";
+  evaluation_id: string | null;
+  embedding_model: string | null;
+  created_at: string;
+  similarity?: number;
 }
