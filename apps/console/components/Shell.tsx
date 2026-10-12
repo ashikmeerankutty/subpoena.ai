@@ -26,6 +26,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 import { api } from "@/lib/api";
 import type { Me } from "@/lib/types";
+import { LogoMark } from "./Logo";
 
 const MeContext = createContext<Me | null>(null);
 export const useMe = () => useContext(MeContext);
@@ -80,7 +81,7 @@ export function Shell({ children }: { children: ReactNode }) {
         topbarSkipLinkID={IDS.top}>
         <SidebarHeader>
           <Box display="flex" alignItems="center" columnGap="space30">
-            <img src="/favicon.svg" alt="" width={28} height={28} />
+            <LogoMark size={28} />
             <SidebarHeaderLabel>Subpoena.ai</SidebarHeaderLabel>
           </Box>
         </SidebarHeader>

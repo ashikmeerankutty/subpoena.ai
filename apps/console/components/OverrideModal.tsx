@@ -38,7 +38,7 @@ export function OverrideModal({ ev, open, onClose, onDone }: {
 
   return (
     <Modal isOpen={open} onDismiss={onClose} size="default" ariaLabelledby="override-heading">
-      <ModalHeader><ModalHeading as="h3" id="override-heading">Appeal: override verdict</ModalHeading></ModalHeader>
+      <ModalHeader><ModalHeading as="h3" id="override-heading">Override verdict</ModalHeading></ModalHeader>
       <ModalBody>
         <Heading as="h4" variant="heading60">Current verdict: {ev.verdict ?? "pending"}</Heading>
         <Label htmlFor="verdict">New verdict</Label>

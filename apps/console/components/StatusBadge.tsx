@@ -11,7 +11,7 @@ const STATUS: Record<Status, [Variant, string]> = {
   AWAITING_TESTIMONY: ["new", "Awaiting testimony"],
   RULED: ["neutral", "Ruled"],
   ESCALATED: ["warning", "Escalated"],
-  APPEALED: ["decorative20", "Appealed"],
+  APPEALED: ["decorative20", "Overridden"],
 };
 
 const VERDICT: Record<Verdict, [Variant, string]> = {
@@ -20,23 +20,28 @@ const VERDICT: Record<Verdict, [Variant, string]> = {
   HOLD: ["warning", "Held"],
 };
 
+function label(status: Status, verdict: Verdict | null): [Variant, string] {
+  if (status === "RULED" && verdict) return VERDICT[verdict];
+  // APPEALED = an analyst overrode the courtroom; the new verdict is what matters.
+  if (status === "APPEALED" && verdict) return [VERDICT[verdict][0], `${VERDICT[verdict][1]} · by analyst`];
+  if (status === "ESCALATED" && verdict === "BLOCK") return ["error", "Blocked · escalated"];
+  return STATUS[status];
+}
+
 export function StatusBadge({ status, verdict }: { status: Status; verdict: Verdict | null }) {
-  // Like the docket in the spec: show the verdict once ruled, otherwise the lifecycle status.
-  const [variant, label] =
-    status === "RULED" && verdict ? VERDICT[verdict] : status === "ESCALATED" && verdict === "BLOCK"
-      ? (["error", "Blocked · escalated"] as [Variant, string])
-      : STATUS[status];
+  // Like the docket in the spec: show the verdict once decided, otherwise the lifecycle status.
+  const [variant, text] = label(status, verdict);
   return (
     <Badge as="span" variant={variant} size="small">
-      {label}
+      {text}
     </Badge>
   );
 }
 
 export function VerdictBadge({ verdict }: { verdict: Verdict | null }) {
   if (!verdict) return <Badge as="span" variant="neutral" size="small">Pending</Badge>;
-  const [variant, label] = VERDICT[verdict];
-  return <Badge as="span" variant={variant} size="small">{label}</Badge>;
+  const [variant, text] = VERDICT[verdict];
+  return <Badge as="span" variant={variant} size="small">{text}</Badge>;
 }
 
 export function PFraud({ value }: { value: number | null }) {

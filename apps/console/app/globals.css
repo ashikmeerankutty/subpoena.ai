@@ -4,3 +4,27 @@ code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85em
 @keyframes pulse { 0% { opacity: 1 } 50% { opacity: .35 } 100% { opacity: 1 } }
 .live-dot { animation: pulse 1.4s infinite; }
 .react-flow__attribution { display: none; }
+
+.login { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); background: #fff; }
+.login-brand {
+  display: flex; flex-direction: column; justify-content: space-between; gap: 48px; padding: 48px 56px; color: #fff;
+  background: radial-gradient(120% 80% at 0% 0%, #2b1830 0%, transparent 60%), linear-gradient(160deg, #121c2d 0%, #0b1220 100%);
+}
+.login-brand h1 { font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; max-width: 460px; }
+.login-brand p { color: #aeb6c7; font-size: 16px; line-height: 1.55; margin: 0 0 40px; max-width: 440px; }
+.login-brand ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 20px; max-width: 440px; }
+.login-brand li { display: flex; gap: 14px; color: #aeb6c7; font-size: 14px; line-height: 1.5; }
+.login-brand li strong { display: block; color: #fff; font-weight: 600; }
+.login-brand li > span {
+  flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255, 84, 102, 0.14); color: #ff7a88; font-weight: 700; font-size: 13px;
+}
+.login-brand small { color: #7d869a; font-size: 12px; }
+.login-main { display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
+.login-mobile-logo { display: none; }
+@media (max-width: 900px) {
+  .login { grid-template-columns: 1fr; }
+  .login-brand { display: none; }
+  .login-mobile-logo { display: block; }
+  .login-main { padding: 48px 16px; align-items: flex-start; }
+}

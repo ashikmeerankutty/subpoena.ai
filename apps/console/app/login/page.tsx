@@ -12,6 +12,8 @@ import { Text } from "@twilio-paste/core/text";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
+import { Logo } from "@/components/Logo";
+
 const ERRORS: Record<string, string> = {
   "not-a-member": "Your Google account is not a member of any workspace. Ask a workspace admin to add you.",
   "unverified-email": "Your Google account email is not verified.",
@@ -20,6 +22,12 @@ const ERRORS: Record<string, string> = {
   "google-cancelled": "Google sign-in was cancelled.",
   "sso-not-configured": "Google sign-in is not configured for this Console.",
 };
+
+const STEPS: [string, string][] = [
+  ["Screen", "Rules and a risk score clear most payments in milliseconds."],
+  ["Debate", "Prosecutor and Defense agents argue the unclear cases from evidence."],
+  ["Subpoena", "The customer confirms on WhatsApp with a code and a receipt photo."],
+];
 
 function GoogleMark() {
   return (
@@ -69,33 +77,51 @@ function LoginForm() {
   );
 
   return (
-    <Box minHeight="100vh" display="flex" alignItems="center" justifyContent="center" backgroundColor="colorBackgroundInverse">
-      <Box backgroundColor="colorBackgroundBody" borderRadius="borderRadius30" padding="space100" boxShadow="shadowHigh"
-        style={{ width: 420 }}>
-        <Box display="flex" alignItems="center" columnGap="space30" marginBottom="space70">
-          <img src="/favicon.svg" alt="" width={36} height={36} />
-          <Box>
-            <Text as="div" fontWeight="fontWeightBold" fontSize="fontSize50">Courthouse Console</Text>
-            <Text as="div" color="colorTextWeak" fontSize="fontSize20">Subpoena.ai</Text>
-          </Box>
+    <div className="login">
+      <aside className="login-brand">
+        <Logo size={36} inverse />
+        <div>
+          <h1>Fraud decisions that ask the witness.</h1>
+          <p>When the evidence is split, the courtroom asks the customer directly and decides with their answer.</p>
+          <ol>
+            {STEPS.map(([title, text], i) => (
+              <li key={title}><span>{i + 1}</span><div><strong>{title}</strong>{text}</div></li>
+            ))}
+          </ol>
+        </div>
+        <small>Every override and setting change is written to the audit log.</small>
+      </aside>
+
+      <main className="login-main">
+        <Box width="100%" style={{ maxWidth: 380 }}>
+          <div className="login-mobile-logo" style={{ marginBottom: 32 }}><Logo size={32} /></div>
+          <Text as="h2" fontSize="fontSize70" lineHeight="lineHeight70" fontWeight="fontWeightBold" marginBottom="space20">
+            Sign in to the Console
+          </Text>
+          <Text as="p" color="colorTextWeak" marginBottom="space80">
+            {google === false ? "Use a workspace API key." : "Use the Google account your workspace admin added."}
+          </Text>
+          {error ? <Box marginBottom="space60"><Alert variant="error"><Text as="span">{error}</Text></Alert></Box> : null}
+          {google ? (
+            <>
+              <Button variant="secondary" size="default" fullWidth onClick={() => { location.href = "/api/auth/google/start"; }}>
+                <GoogleMark />
+                Continue with Google
+              </Button>
+              <Box display="flex" alignItems="center" columnGap="space40" marginY="space70">
+                <Box flexGrow={1}><Separator orientation="horizontal" /></Box>
+                <Text as="span" fontSize="fontSize20" color="colorTextWeak">or</Text>
+                <Box flexGrow={1}><Separator orientation="horizontal" /></Box>
+              </Box>
+              <Disclosure variant="contained">
+                <DisclosureHeading as="h3" variant="heading60">Use an API key</DisclosureHeading>
+                <DisclosureContent>{keyForm}</DisclosureContent>
+              </Disclosure>
+            </>
+          ) : google === false ? keyForm : null}
         </Box>
-        {error ? <Box marginBottom="space50"><Alert variant="error"><Text as="span">{error}</Text></Alert></Box> : null}
-        {google ? (
-          <>
-            <Button variant="primary" fullWidth onClick={() => { location.href = "/api/auth/google/start"; }}>
-              <Box as="span" display="inline-flex" alignItems="center" justifyContent="center" backgroundColor="colorBackgroundBody"
-                borderRadius="borderRadiusCircle" padding="space10"><GoogleMark /></Box>
-              Sign in with Google
-            </Button>
-            <Box marginY="space70"><Separator orientation="horizontal" /></Box>
-            <Disclosure variant="contained">
-              <DisclosureHeading as="h3" variant="heading60">Use an API key instead</DisclosureHeading>
-              <DisclosureContent>{keyForm}</DisclosureContent>
-            </Disclosure>
-          </>
-        ) : google === false ? keyForm : null}
-      </Box>
-    </Box>
+      </main>
+    </div>
   );
 }
 

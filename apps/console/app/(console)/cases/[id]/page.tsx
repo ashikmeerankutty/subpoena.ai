@@ -120,7 +120,7 @@ export default function CasePage() {
         </Box>
       ) : null}
       {ev.override ? (
-        <Box marginBottom="space60"><Callout variant="neutral"><CalloutHeading as="h3">Appealed by {ev.override.by}</CalloutHeading>
+        <Box marginBottom="space60"><Callout variant="neutral"><CalloutHeading as="h3">Overridden by {ev.override.by}</CalloutHeading>
           <CalloutText>{ev.override.previous_verdict} → {ev.override.verdict}: {ev.override.reason}</CalloutText></Callout></Box>
       ) : null}
 
