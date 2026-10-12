@@ -13,6 +13,7 @@ import { Text } from "@twilio-paste/core/text";
 import { Topbar, TopbarActions } from "@twilio-paste/core/topbar";
 import { ProductContactCenterTasksIcon } from "@twilio-paste/icons/esm/ProductContactCenterTasksIcon";
 import { ProductDebuggerIcon } from "@twilio-paste/icons/esm/ProductDebuggerIcon";
+import { ProductDestinationsIcon } from "@twilio-paste/icons/esm/ProductDestinationsIcon";
 import { ProductHomeIcon } from "@twilio-paste/icons/esm/ProductHomeIcon";
 import { ProductLogsIcon } from "@twilio-paste/icons/esm/ProductLogsIcon";
 import { ProductSettingsIcon } from "@twilio-paste/icons/esm/ProductSettingsIcon";
@@ -31,6 +32,7 @@ export const useMe = () => useContext(MeContext);
 const NAV = [
   { href: "/", label: "Overview", icon: ProductHomeIcon },
   { href: "/sources", label: "Sources", icon: ProductSourcesIcon },
+  { href: "/destinations", label: "Destinations", icon: ProductDestinationsIcon },
   { href: "/transactions", label: "Transactions", icon: ProductDebuggerIcon },
   { href: "/cases", label: "Cases", icon: ProductContactCenterTasksIcon },
   { href: "/subpoenas", label: "Subpoenas", icon: ProductMessagingIcon },

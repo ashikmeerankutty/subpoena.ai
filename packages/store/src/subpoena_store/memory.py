@@ -8,7 +8,9 @@ from typing import Any
 from subpoena_schemas import (
     ApiKey,
     AuditEntry,
+    Delivery,
     DeliveryStatus,
+    Destination,
     Evaluation,
     Member,
     PipelineEvent,
@@ -38,6 +40,8 @@ class MemoryStore:
         self.feedback: list[dict[str, Any]] = []
         self._members: dict[str, Member] = {}
         self._audit: list[AuditEntry] = []
+        self._destinations: dict[str, Destination] = {}
+        self._deliveries: list[Delivery] = []
         self._lock = asyncio.Lock()
 
     async def put_workspace(self, ws: Workspace) -> None:
@@ -203,3 +207,25 @@ class MemoryStore:
     async def list_audit(self, workspace_id: str, limit: int) -> list[AuditEntry]:
         rows = [a for a in self._audit if a.workspace_id == workspace_id]
         return sorted(rows, key=lambda a: a.at, reverse=True)[:limit]
+
+    async def put_destination(self, dest: Destination) -> None:
+        self._destinations[dest.id] = dest
+
+    async def get_destination(self, workspace_id: str, destination_id: str) -> Destination | None:
+        d = self._destinations.get(destination_id)
+        return d if d and d.workspace_id == workspace_id else None
+
+    async def list_destinations(self, workspace_id: str) -> list[Destination]:
+        rows = [d for d in self._destinations.values() if d.workspace_id == workspace_id]
+        return sorted(rows, key=lambda d: d.created_at)
+
+    async def delete_destination(self, workspace_id: str, destination_id: str) -> None:
+        if await self.get_destination(workspace_id, destination_id):
+            del self._destinations[destination_id]
+
+    async def append_delivery(self, delivery: Delivery) -> None:
+        self._deliveries.append(delivery)
+
+    async def list_deliveries(self, workspace_id: str, limit: int) -> list[Delivery]:
+        rows = [d for d in self._deliveries if d.workspace_id == workspace_id]
+        return sorted(rows, key=lambda d: d.at, reverse=True)[:limit]

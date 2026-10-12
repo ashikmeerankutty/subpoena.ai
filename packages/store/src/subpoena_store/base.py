@@ -9,6 +9,8 @@ from typing import Any, Protocol
 from subpoena_schemas import (
     ApiKey,
     AuditEntry,
+    Delivery,
+    Destination,
     Evaluation,
     EvaluationStatus,
     Member,
@@ -135,5 +137,17 @@ class Store(Protocol):
     # Audit log (append-only)
     async def append_audit(self, entry: AuditEntry) -> None: ...
     async def list_audit(self, workspace_id: str, limit: int) -> list[AuditEntry]:
+        """Newest first."""
+        ...
+
+    # Destinations & delivery log
+    async def put_destination(self, dest: Destination) -> None: ...
+    async def get_destination(
+        self, workspace_id: str, destination_id: str
+    ) -> Destination | None: ...
+    async def list_destinations(self, workspace_id: str) -> list[Destination]: ...
+    async def delete_destination(self, workspace_id: str, destination_id: str) -> None: ...
+    async def append_delivery(self, delivery: Delivery) -> None: ...
+    async def list_deliveries(self, workspace_id: str, limit: int) -> list[Delivery]:
         """Newest first."""
         ...

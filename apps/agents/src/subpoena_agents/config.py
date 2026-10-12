@@ -34,6 +34,7 @@ class CourtSettings(BaseSettings):
     model_armor_location: str = "us-central1"
 
     webhook_signing_secret: SecretStr = SecretStr("dev-only-webhook-secret")
+    console_public_url: str | None = None  # for links in Slack alerts
     daily_case_cap: int = 300  # cost governor: courtroom cases per workspace per day
 
     media_store: Literal["memory", "gcs"] = "memory"  # witness photos (receipts)

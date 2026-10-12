@@ -13,6 +13,8 @@ Layout
   feedback/{id}
   members/{member_id}                    queried by ``workspace_id`` or ``email``
   workspaces/{workspace_id}/audit/{id}   append-only, ordered by ``at``
+  workspaces/{workspace_id}/destinations/{id}
+  workspaces/{workspace_id}/deliveries/{id}   delivery log, ordered by ``at``
 
 Documents are stored in Pydantic's JSON mode (Decimals and datetimes as strings), so
 reading back is a plain ``model_validate``. Fields used in queries get native copies.
@@ -31,6 +33,8 @@ from google.cloud import firestore
 from subpoena_schemas import (
     ApiKey,
     AuditEntry,
+    Delivery,
+    Destination,
     Evaluation,
     Member,
     PipelineEvent,
@@ -415,3 +419,40 @@ class FirestoreStore:
             .limit(limit)
         )
         return [AuditEntry.model_validate(_strip(s.to_dict())) async for s in query.stream()]
+
+    # Destinations & delivery log ---------------------------------------------------------
+
+    def _ws_col(self, workspace_id: str, name: str) -> firestore.AsyncCollectionReference:
+        col: firestore.AsyncCollectionReference = (
+            self._db.collection("workspaces").document(workspace_id).collection(name)
+        )
+        return col
+
+    async def put_destination(self, dest: Destination) -> None:
+        await self._ws_col(dest.workspace_id, "destinations").document(dest.id).set(_doc(dest))
+
+    async def get_destination(self, workspace_id: str, destination_id: str) -> Destination | None:
+        snap = await self._ws_col(workspace_id, "destinations").document(destination_id).get()
+        return Destination.model_validate(snap.to_dict()) if snap.exists else None
+
+    async def list_destinations(self, workspace_id: str) -> list[Destination]:
+        rows = [
+            Destination.model_validate(s.to_dict())
+            async for s in self._ws_col(workspace_id, "destinations").stream()
+        ]
+        return sorted(rows, key=lambda d: d.created_at)
+
+    async def delete_destination(self, workspace_id: str, destination_id: str) -> None:
+        await self._ws_col(workspace_id, "destinations").document(destination_id).delete()
+
+    async def append_delivery(self, delivery: Delivery) -> None:
+        data = _doc(delivery) | {"_at": delivery.at}
+        await self._ws_col(delivery.workspace_id, "deliveries").document(delivery.id).set(data)
+
+    async def list_deliveries(self, workspace_id: str, limit: int) -> list[Delivery]:
+        query = (
+            self._ws_col(workspace_id, "deliveries")
+            .order_by("_at", direction=firestore.Query.DESCENDING)
+            .limit(limit)
+        )
+        return [Delivery.model_validate(_strip(s.to_dict())) async for s in query.stream()]

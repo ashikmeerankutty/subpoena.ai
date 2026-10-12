@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     media_store: Literal["memory", "gcs"] = "memory"
     media_bucket: str | None = None
     max_media_bytes: int = 5_000_000
+    console_public_url: str | None = None  # for links in Slack alerts
+    bigquery_export_table: str | None = None  # suggested BigQuery destination table
 
     @property
     def key_mode(self) -> str:

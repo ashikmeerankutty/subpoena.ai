@@ -17,7 +17,7 @@ from .baselines import BaselineSource, FirestoreBaselines, SeedBaselines
 from .deps import GoogleVerifier, Services
 from .pii import MaskPiiMiddleware
 from .publisher import LogPublisher, MemoryPublisher, Publisher, PubSubPublisher
-from .routes import api_keys, console, evaluations, members, sessions, twilio
+from .routes import api_keys, console, destinations, evaluations, members, sessions, twilio
 from .routes.api_keys import issue_key
 from .security import display_prefix, hash_secret
 from .settings import Settings, get_settings
@@ -55,7 +55,12 @@ def build_services(settings: Settings) -> Services:
         baselines = FirestoreBaselines(settings.gcp_project, settings.firestore_database)
     else:
         baselines = SeedBaselines(settings.seed_dir)
-    notifier = BankNotifier(settings.webhook_signing_secret.get_secret_value())
+    notifier = BankNotifier(
+        settings.webhook_signing_secret.get_secret_value(),
+        store=store,
+        console_url=settings.console_public_url,
+        project=settings.gcp_project,
+    )
     return Services(
         settings=settings,
         store=store,
@@ -107,6 +112,7 @@ def create_app(services: Services | None = None, *, bootstrap_local: bool = Fals
     app.include_router(api_keys.router)
     app.include_router(console.router)
     app.include_router(members.router)
+    app.include_router(destinations.router)
     app.include_router(sessions.router)
     app.include_router(twilio.router)
 

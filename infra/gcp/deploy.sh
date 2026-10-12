@@ -114,6 +114,20 @@ for pair in "sp-api:roles/storage.objectCreator" "sp-api:roles/storage.objectVie
     --member="serviceAccount:$(sa "${pair%%:*}")" --role="${pair##*:}" --quiet >/dev/null
 done
 
+echo "==> Destinations: BigQuery export table + demo Pub/Sub topic"
+EXPORT_TABLE="$PROJECT.subpoena_exports.decisions"
+bq --project_id="$PROJECT" show subpoena_exports >/dev/null 2>&1 ||
+  bq --project_id="$PROJECT" --location=US mk --dataset --description "Subpoena.ai decision exports" subpoena_exports >/dev/null
+bq --project_id="$PROJECT" show subpoena_exports.decisions >/dev/null 2>&1 ||
+  bq --project_id="$PROJECT" mk --table --time_partitioning_field=created_at subpoena_exports.decisions \
+    event_id:STRING,event_type:STRING,created_at:TIMESTAMP,workspace_id:STRING,evaluation_id:STRING,transaction_id:STRING,status:STRING,verdict:STRING,p_fraud:FLOAT,amount:NUMERIC,currency:STRING,merchant:STRING,data:JSON >/dev/null
+$G pubsub topics describe subpoena.decisions >/dev/null 2>&1 || $G pubsub topics create subpoena.decisions >/dev/null
+bind sp-court roles/pubsub.publisher
+for a in sp-api sp-court; do
+  bind "$a" roles/bigquery.dataEditor
+  bind "$a" roles/bigquery.jobUser
+done
+
 echo "==> Firestore indexes (async)"
 for extra in "" status verdict transaction.user_id; do
   args=(--collection-group=evaluations --field-config=field-path=workspace_id,order=ascending)
@@ -134,7 +148,7 @@ MEDIA="SUBPOENA_MEDIA_STORE=gcs,SUBPOENA_MEDIA_BUCKET=$BUCKET"
 MCP_ENV="APP=subpoena_mcp.app:create_app,$ENV,SUBPOENA_DATA=bigquery,SUBPOENA_WITNESS_CHANNEL=simulator"
 MCP_SECRETS="SUBPOENA_AGENT_TOKEN_SECRET=agent-token-secret:latest"
 API_SECRETS="SUBPOENA_API_KEY_PEPPER=api-key-pepper:latest,SUBPOENA_WEBHOOK_SIGNING_SECRET=webhook-signing-secret:latest"
-API_ENV="APP=subpoena_api.main:create_app,$ENV,$MEDIA,SUBPOENA_PUBLISHER=pubsub,SUBPOENA_BASELINES=firestore,SUBPOENA_WITNESS_SIMULATOR=true"
+API_ENV="APP=subpoena_api.main:create_app,$ENV,$MEDIA,SUBPOENA_PUBLISHER=pubsub,SUBPOENA_BASELINES=firestore,SUBPOENA_WITNESS_SIMULATOR=true,SUBPOENA_BIGQUERY_EXPORT_TABLE=$EXPORT_TABLE"
 CONSOLE_ARGS=()
 if [ -n "$GOOGLE" ]; then
   API_ENV+=",SUBPOENA_GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
@@ -208,6 +222,9 @@ $G run deploy subpoena-console --region="$REGION" --image="$REPO/console:$TAG" -
 CONSOLE_URL=$($G run services describe subpoena-console --region="$REGION" --format='value(status.url)')
 # OAuth redirects must use the URL registered with Google, not the request's internal origin.
 $G run services update subpoena-console --region="$REGION" --update-env-vars="CONSOLE_PUBLIC_URL=$CONSOLE_URL" >/dev/null
+for svc in subpoena-api subpoena-courtroom; do  # links in Slack alerts
+  $G run services update "$svc" --region="$REGION" --update-env-vars="SUBPOENA_CONSOLE_PUBLIC_URL=$CONSOLE_URL" >/dev/null
+done
 
 cat <<OUT
 

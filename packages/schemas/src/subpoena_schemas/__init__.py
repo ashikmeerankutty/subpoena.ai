@@ -22,6 +22,8 @@ from .common import (
     new_id,
     utcnow,
 )
+from .destination import EVENT_TYPES, Delivery, Destination, DestinationType
+from .destination import DeliveryStatus as DestinationDeliveryStatus
 from .evaluation import (
     DebateSummaryItem,
     Evaluation,
@@ -84,6 +86,7 @@ from .workspace import (
 )
 
 __all__ = [
+    "EVENT_TYPES",
     "ROLE_SCOPES",
     "Actor",
     "ActorType",
@@ -98,7 +101,11 @@ __all__ = [
     "ClaimOut",
     "DebateSummaryItem",
     "Decision",
+    "Delivery",
     "DeliveryStatus",
+    "Destination",
+    "DestinationDeliveryStatus",
+    "DestinationType",
     "Evaluation",
     "EvaluationOptions",
     "EvaluationRequest",

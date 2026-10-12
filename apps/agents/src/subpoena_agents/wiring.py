@@ -47,7 +47,13 @@ def build_courtroom(
         mcp=mcp,
         llm=llm or (GeminiLlm(settings) if settings.llm == "gemini" else ScriptedLlm()),
         screener=screener,
-        notifier=notifier or BankNotifier(settings.webhook_signing_secret.get_secret_value()),
+        notifier=notifier
+        or BankNotifier(
+            settings.webhook_signing_secret.get_secret_value(),
+            store=store,
+            console_url=settings.console_public_url,
+            project=settings.gcp_project,
+        ),
         scheduler=scheduler or LocalScheduler(),
         max_rounds=settings.max_rounds,
         media=media
