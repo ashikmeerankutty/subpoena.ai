@@ -117,7 +117,7 @@ def decide(
         return _block(f"p_fraud {p_fraud:.2f} >= block threshold {t.block_min:.2f}")
     if p_fraud <= t.approve_max:
         return _approve(f"p_fraud {p_fraud:.2f} <= approve threshold {t.approve_max:.2f}")
-    usable = [c for c in witness_channels if c in policy.subpoena.channels]
+    usable = [c for c in policy.subpoena.channels if c in witness_channels]
     if usable and amount >= policy.subpoena.min_amount:
         return Decision(
             outcome=Outcome.SUBPOENA,

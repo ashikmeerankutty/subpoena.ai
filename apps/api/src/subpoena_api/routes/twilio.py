@@ -371,7 +371,8 @@ class SimulatedPhoto(Model):
 class SimulatedReply(Model):
     phone: str = Field(pattern=r"^\+[1-9]\d{6,14}$")
     body: str = Field(default="", max_length=1000)
-    channel: Channel = Channel.WHATSAPP
+    # Defaults to the channel the open subpoena went out on (texts, for a phone call).
+    channel: Channel | None = None
     photos: list[SimulatedPhoto] = Field(default_factory=list, max_length=MAX_PHOTOS)
 
     @model_validator(mode="after")
@@ -402,8 +403,11 @@ async def simulator_reply(
         if len(data) > services.settings.max_media_bytes:
             raise ProblemError(413, "photo-too-large", "Photos must be 5 MB or smaller")
         photos.append((data, p.content_type))
+    channel = body.channel or (sub.channel if sub is not None else Channel.WHATSAPP)
+    if channel == Channel.VOICE:
+        channel = Channel.SMS
     return await record_inbound(
-        services, body.phone, body.body, body.channel, sid=None, photos=photos, source="simulator"
+        services, body.phone, body.body, channel, sid=None, photos=photos, source="simulator"
     )
 
 

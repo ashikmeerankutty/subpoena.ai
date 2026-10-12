@@ -137,12 +137,15 @@ def test_undelivered_subpoena_moves_to_the_next_channel(monkeypatch) -> None:
         events = c.get(f"/v1/evaluations/{ev['evaluation_id']}", headers=H).json()
         assert events["status"] == "AWAITING_TESTIMONY"
 
-        # A reply on the new channel still completes the case.
+        # A reply on the new channel still completes the case; the simulator replies on the
+        # subpoena's current channel unless told otherwise.
         c.post(
             "/v1/simulator/witness-reply",
             headers=H,
-            json={"phone": PHONE, "body": f"Yes, my BMW parts {code_of(sub)}", "channel": "SMS"},
+            json={"phone": PHONE, "body": f"Yes, my BMW parts {code_of(sub)}"},
         )
+        inbound = [m for m in subpoena(c, ev)["messages"] if m["direction"] == "INBOUND"]
+        assert inbound[-1]["channel"] == "SMS"
         assert wait_for(c, ev["evaluation_id"], "RULED")["verdict"] == "APPROVE"
 
 

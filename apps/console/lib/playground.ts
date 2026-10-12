@@ -46,8 +46,8 @@ export const ENDPOINTS: Endpoint[] = [
   },
   {
     id: "witness-reply", group: "Witness", method: "POST", path: "simulator/witness-reply", title: "Reply as the witness (simulator)",
-    description: "Behaves exactly like an inbound WhatsApp/SMS. Put the 6-digit code in the body to verify.",
-    body: { phone: "+14155550123", body: "Yes, those are parts for my BMW project", channel: "WHATSAPP" },
+    description: "Behaves exactly like an inbound reply on the subpoena's channel. Put the 6-digit code in the body to verify.",
+    body: { phone: "+14155550123", body: "Yes, those are parts for my BMW project" },
   },
   {
     id: "get-subpoena", group: "Witness", method: "GET", path: "subpoenas/{subpoena_id}", title: "Get a subpoena",
