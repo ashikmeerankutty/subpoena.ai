@@ -51,8 +51,8 @@ class Harness:
     async def reply(self, subpoena_id: str, *, text: str | None = None, code: str | None = None):
         sub = await self.store.get_subpoena(subpoena_id)
         assert sub is not None
-        if text is not None:
-            sub.reply_text = text
+        if text is not None:  # messages accumulate, as the API stores them
+            sub.reply_text = f"{sub.reply_text}\n{text}" if sub.reply_text else text
         if code is not None:
             sub.pending_code = code
         await self.store.put_subpoena(sub)

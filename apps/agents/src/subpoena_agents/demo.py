@@ -144,6 +144,15 @@ def main() -> None:
         ev = d.wait(ev["evaluation_id"], FINAL)
     results.append(line("auto parts after testimony", ev, "RULED/APPROVE"))
 
+    print("4b. The scam: the real cardholder, told to move money to a 'safe account'")
+    ev = d.wait(d.send("safe_account_scam")["evaluation_id"], FINAL | {"AWAITING_TESTIMONY"})
+    if ev["status"] == "AWAITING_TESTIMONY":
+        phone = d.scenarios["safe_account_scam"]["request"]["witness"]["phone"]
+        d.reply(phone, d.scenarios["safe_account_scam"]["testimony"]["reply"])
+        d.reply(phone, d.code_for(ev["subpoena"]["id"]))
+        ev = d.wait(ev["evaluation_id"], FINAL)
+    results.append(line("safe-account scam", ev, "ESCALATED/HOLD"))
+
     print("5. The attack (SIM swap)")
     ev = d.wait(d.send("sim_swap")["evaluation_id"], FINAL)
     results.append(line("sim swap", ev, "ESCALATED/BLOCK"))

@@ -21,6 +21,15 @@ REMOTE = {
     TransactionType.ACH,
 }
 
+# Money sent to another person or account: the payments scammers talk victims into making.
+PUSH_TYPES = {TransactionType.P2P, TransactionType.WIRE, TransactionType.ACH}
+PUSH_MCCS = {"4829", "6051", "6540"}  # money transfer, quasi-cash and crypto, stored-value load
+
+
+def is_push_payment(ev: Evaluation) -> bool:
+    t = ev.transaction
+    return t.type in PUSH_TYPES or t.merchant.mcc in PUSH_MCCS
+
 
 def sig(type_: str, severity: str, supports: str, detail: str) -> dict[str, str]:
     return {"type": type_, "severity": severity, "supports": supports, "detail": detail}
