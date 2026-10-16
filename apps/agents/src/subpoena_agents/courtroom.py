@@ -59,6 +59,23 @@ log = logging.getLogger(__name__)
 
 MAX_CODE_ATTEMPTS = 3
 
+SCAM_PROMPT = "for example someone saying they're from your bank or the police"
+SCAM_WARNING = (
+    "Your bank and the police will never ask you to move money or to keep a payment secret."
+)
+# One follow-up at most, when the first reply leaves the answer open (Spec §6).
+FOLLOW_UPS: dict[tuple[str, ...], str] = {
+    ("confirm",): "Sorry, we couldn't tell from your reply. Did you make this payment yourself? "
+    "Reply YES or NO.",
+    ("reason",): "Thanks. One more check: what did you buy, or what was this payment for?",
+    ("scam",): "Thanks. One more check to keep you safe: has anyone asked you or told you to "
+    f"make this payment, {SCAM_PROMPT}? Reply YES or NO.",
+    ("confirm", "scam"): "Sorry, we couldn't tell from your reply. Did you make this payment "
+    f"yourself, and has anyone asked you or told you to make it, {SCAM_PROMPT}?",
+    ("reason", "scam"): "Thanks. Two quick checks to keep you safe: what is this payment for, "
+    f"and has anyone asked you or told you to make it, {SCAM_PROMPT}?",
+}
+
 
 class Courtroom:
     def __init__(
@@ -426,6 +443,7 @@ class Courtroom:
             channel=Channel.SMS,
             sent_at=now,
             expires_at=now + timedelta(seconds=policy.subpoena.timeout_seconds),
+            scam_check=evidence.is_push_payment(ev),
         )
 
         # Bailiff: SIM-swap check before the witness is contacted.
@@ -615,6 +633,8 @@ class Courtroom:
                     "Thanks. To confirm it's really you, please send the 6-digit code we texted.",
                 )
             return ev
+        if sub.follow_up and sub.follow_up_answer() is None:
+            return ev  # still waiting for the answer to the follow-up question
         return await self._admit(ev, sub, policy)
 
     async def _read_receipt(
@@ -646,21 +666,58 @@ class Courtroom:
             return unreadable("The photo could not be read"), None
         return receipts.compare(photo.id, read.value, ev.transaction), read
 
+    async def _extract(self, sub: Subpoena) -> LlmResult[TestimonyClaims]:
+        assert sub.reply_text is not None
+        ctx: dict[str, Any] = {"witness_message": f"<untrusted>{sub.reply_text}</untrusted>"}
+        if sub.follow_up:
+            ctx["follow_up"] = {
+                "question": sub.follow_up,
+                "asks": sub.follow_up_asks,
+                "answer": f"<untrusted>{sub.follow_up_answer() or ''}</untrusted>",
+            }
+        return await self.llm.generate(Agent.WITNESS, prompts.EXTRACTOR, ctx, TestimonyClaims)
+
+    async def _follow_up(
+        self, ev: Evaluation, sub: Subpoena, asks: list[str], extracted: LlmResult[TestimonyClaims]
+    ) -> Evaluation:
+        """The reply left the answer open: ask one more question before the testimony counts."""
+        question = FOLLOW_UPS[tuple(asks)]
+        sub.follow_up, sub.follow_up_asks = question, asks
+        sub.follow_up_offset = len(sub.reply_text or "")
+        await self.store.put_subpoena(sub)
+        await self._reply(sub, question)
+        await self.emit(
+            ev,
+            Agent.JUDGE,
+            EventType.SUBPOENA_SENT,
+            {
+                "subpoena_id": sub.id,
+                "follow_up": True,
+                "asks": asks,
+                "question": question,
+                "claims_so_far": extracted.value.model_dump(),
+            },
+            to=Agent.WITNESS,
+            result=extracted,
+        )
+        return ev
+
     async def _admit(self, ev: Evaluation, sub: Subpoena, policy: Policy) -> Evaluation:
         """Testimony is authenticated: screen, extract, re-rule (Spec §5 'After testimony')."""
         assert sub.reply_text is not None
+        screening = await self.screener.screen(sub.reply_text)
+        extracted = await self._extract(sub)
+        claims = extracted.value
+        asks = [] if screening.flagged else _follow_up_asks(sub, claims)
+        if asks:
+            return await self._follow_up(ev, sub, asks, extracted)
+
         sub.state = SubpoenaState.ADMITTED
         sub.responded_at = utcnow()
         await self.store.put_subpoena(sub)
-
-        screening = await self.screener.screen(sub.reply_text)
-        extracted = await self.llm.generate(
-            Agent.WITNESS,
-            prompts.EXTRACTOR,
-            {"witness_message": f"<untrusted>{sub.reply_text}</untrusted>"},
-            TestimonyClaims,
+        follow_up = (
+            {"question": sub.follow_up, "answer": sub.follow_up_answer()} if sub.follow_up else None
         )
-        claims = extracted.value
         receipt, read = await self._read_receipt(ev, sub)
         testimony = Testimony(
             subpoena_id=sub.id,
@@ -683,6 +740,7 @@ class Courtroom:
                 "flagged": screening.flagged,
                 "screening": {"engine": screening.engine, "reasons": screening.reasons},
                 "raw_text": sub.reply_text,
+                "follow_up": follow_up,
             },
             to=Agent.JUDGE,
             result=extracted,
@@ -722,6 +780,22 @@ class Courtroom:
             )
             await self._reply(sub, "Thanks. An analyst will review this payment shortly.")
             return await self._finalize(ev, decision, p_fraud=ev.p_fraud, rationale=decision.reason)
+        if claims.told_to_pay:
+            # The real cardholder, talked into paying: their "yes" is the scam working.
+            decision = Decision(
+                outcome=Outcome.ESCALATE,
+                verdict=Verdict.HOLD,
+                status=EvaluationStatus.ESCALATED,
+                reason="The cardholder confirmed the payment but says someone told them to make it: "
+                "a possible authorised push-payment scam. Held for a specialist to call them",
+            )
+            await self._reply(
+                sub,
+                "Thank you for telling us. We've paused this payment to protect you. "
+                f"{SCAM_WARNING} Please call us on the number on the back of your card before "
+                "you send any money.",
+            )
+            return await self._finalize(ev, decision, p_fraud=ev.p_fraud, rationale=decision.reason)
 
         # Confirmed: the Judge re-rules once with the testimony as new evidence.
         events = await self.store.list_events(ev.evaluation_id)
@@ -738,6 +812,12 @@ class Courtroom:
                 if screening.flagged
                 else f"<untrusted>{sub.reply_text}</untrusted>",
                 "screening_flagged": screening.flagged,
+                "follow_up": {
+                    "question": sub.follow_up,
+                    "answer": f"<untrusted>{sub.follow_up_answer() or ''}</untrusted>",
+                }
+                if sub.follow_up and not screening.flagged
+                else None,
                 "receipt": receipt.model_dump(mode="json", exclude={"media_id"})
                 if receipt
                 else None,
@@ -841,12 +921,15 @@ class Courtroom:
             return None
         if utcnow() < sub.expires_at - timedelta(seconds=1):
             return None  # early delivery; the real timer will fire later
-        sub.state = SubpoenaState.EXPIRED
-        await self.store.put_subpoena(sub)
         ev = await self.store.get_evaluation_any(sub.evaluation_id)
         if ev is None:
             return None
         policy = await self._policy(ev)
+        if sub.follow_up and sub.code_verified and sub.reply_text:
+            # They answered the subpoena but not the follow-up: rule on what they said.
+            return await self._admit(ev, sub, policy)
+        sub.state = SubpoenaState.EXPIRED
+        await self.store.put_subpoena(sub)
         await self.emit(
             ev,
             Agent.SYSTEM,
@@ -951,6 +1034,20 @@ class Courtroom:
             except Exception:  # never fail a verdict over the library
                 log.exception("could not record precedent for %s", ev.evaluation_id)
         return ev
+
+
+def _follow_up_asks(sub: Subpoena, claims: TestimonyClaims) -> list[str]:
+    """What the first reply left open; nothing once the one follow-up has been asked."""
+    if sub.follow_up is not None or claims.confirms_transaction is False:
+        return []
+    asks = []
+    if claims.confirms_transaction is None:
+        asks.append("confirm")
+    elif not claims.stated_reason:
+        asks.append("reason")
+    if sub.scam_check and claims.told_to_pay is None:
+        asks.append("scam")
+    return asks
 
 
 def _baseline_view(b: dict[str, Any]) -> dict[str, Any]:

@@ -159,6 +159,7 @@ def _impact(evs: list[Evaluation], subs: list[Subpoena]) -> dict[str, Any]:
         ):
             auto += 1
     flagged = sum(1 for e in evs if e.testimony and e.testimony.flagged_by_screening)
+    scams = sum(1 for e in evs if e.testimony and e.testimony.claims.told_to_pay)
     # Payment to final decision, including the cases that waited for the cardholder's reply.
     resolution = [(e.ruled_at - e.created_at).total_seconds() for e in evs if e.ruled_at]
     states = Counter(s.state for s in subs)
@@ -175,6 +176,7 @@ def _impact(evs: list[Evaluation], subs: list[Subpoena]) -> dict[str, Any]:
             "sim_swap_blocked": states[SubpoenaState.AUTH_FAILED],
             "code_failed": states[SubpoenaState.CODE_FAILED],
             "testimony_flagged": flagged,
+            "scam_held": scams,
         },
     }
 

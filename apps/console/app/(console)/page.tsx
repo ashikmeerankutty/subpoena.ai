@@ -17,7 +17,7 @@ interface Impact {
   fraud_stopped: { count: number; amounts: Record<string, string>; denied_by_cardholder: number };
   customers_not_contacted_rate: number | null;
   median_resolution_s: number | null;
-  witness_protection: { sim_swap_blocked: number; code_failed: number; testimony_flagged: number };
+  witness_protection: { sim_swap_blocked: number; code_failed: number; testimony_flagged: number; scam_held?: number };
 }
 
 /** Per-currency totals, largest first: "$4,500.00" or "$4,500.00 + €120.00". */
@@ -100,8 +100,8 @@ export default function OverviewPage() {
           <Kpi label="Median time to resolution" value={seconds(impact?.median_resolution_s)}
             hint="payment to final decision, including waiting for a reply" />
           <Kpi label="Witness safeguards triggered"
-            value={(guard?.sim_swap_blocked ?? 0) + (guard?.code_failed ?? 0) + (guard?.testimony_flagged ?? 0)}
-            hint={`${guard?.sim_swap_blocked ?? 0} SIM swap · ${guard?.code_failed ?? 0} failed code · ${guard?.testimony_flagged ?? 0} flagged reply`} />
+            value={(guard?.sim_swap_blocked ?? 0) + (guard?.code_failed ?? 0) + (guard?.testimony_flagged ?? 0) + (guard?.scam_held ?? 0)}
+            hint={`${guard?.sim_swap_blocked ?? 0} SIM swap · ${guard?.code_failed ?? 0} failed code · ${guard?.testimony_flagged ?? 0} flagged reply · ${guard?.scam_held ?? 0} scam held`} />
         </KpiGrid>
       </Panel>
       <Panel title="AI cost and value">

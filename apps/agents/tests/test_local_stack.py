@@ -118,7 +118,7 @@ def test_overview_reports_customer_impact(monkeypatch) -> None:
         c.post(
             "/v1/simulator/witness-reply",
             headers=H,
-            json={"phone": "+14155550123", "body": f"Yes, it was me {code}"},
+            json={"phone": "+14155550123", "body": f"Yes, it was me, car parts {code}"},
         )
         wait_for(c, ev["evaluation_id"], "RULED")
 

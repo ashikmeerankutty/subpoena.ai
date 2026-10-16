@@ -97,6 +97,22 @@ class Subpoena(SubpoenaRef):
     code_attempts: int = 0
     responded_at: datetime | None = None
     media: list[MediaRef] = Field(default_factory=list, description="Photos sent by the witness")
+    scam_check: bool = Field(
+        default=False, description="A push payment: ask whether anyone told them to make it"
+    )
+    follow_up: str | None = Field(default=None, description="The one follow-up question sent")
+    follow_up_asks: list[str] = Field(
+        default_factory=list, description="What the follow-up asks: confirm | reason | scam"
+    )
+    follow_up_offset: int = Field(
+        default=0, ge=0, description="Length of reply_text when the follow-up was sent"
+    )
+
+    def follow_up_answer(self) -> str | None:
+        """What the witness wrote after the follow-up question, if anything yet."""
+        if self.follow_up is None or not self.reply_text:
+            return None
+        return self.reply_text[self.follow_up_offset :].strip() or None
 
     def ref(self) -> SubpoenaRef:
         return SubpoenaRef(
@@ -113,6 +129,12 @@ class TestimonyClaims(BaseModel):
     stated_reason: str | None = Field(default=None, description="Why, in the witness's words")
     mentions_travel: bool = False
     sentiment: str | None = Field(default=None, description="calm, anxious, angry, ...")
+    told_to_pay: bool | None = Field(
+        default=None,
+        description="true if someone else asked, told or pressured them to make this payment "
+        "(e.g. a caller claiming to be the bank or police), false if they say nobody did, "
+        "null if they don't say",
+    )
 
 
 class Testimony(Model):

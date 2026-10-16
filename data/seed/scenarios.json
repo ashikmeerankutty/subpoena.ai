@@ -145,6 +145,47 @@
     }
   },
   {
+    "name": "safe_account_scam",
+    "description": "$4,800 transfer to a new payee from Alex's own phone and home network — deadlocks; Alex confirms, but says the 'bank' told him to move it → HOLD + ESCALATE.",
+    "expected": {
+      "tier0_route": "COURT",
+      "first_ruling": "SUBPOENA",
+      "verdict": "HOLD",
+      "status": "ESCALATED"
+    },
+    "request": {
+      "currency": "USD",
+      "options": {
+        "sync_timeout_ms": 8000
+      },
+      "transaction_id": "tx_demo_safe_account",
+      "user_id": "usr_9921",
+      "amount": 4800.0,
+      "type": "P2P",
+      "occurred_at": "2026-10-09T18:42:10Z",
+      "merchant": {
+        "name": "Zelle · J. Carter",
+        "mcc": "4829",
+        "country": "US"
+      },
+      "metadata": {
+        "ip_address": "198.18.10.21",
+        "device_fingerprint": "dev-alex-iphone15"
+      },
+      "witness": {
+        "phone": "+14155550123",
+        "allowed_channels": [
+          "WHATSAPP",
+          "SMS"
+        ]
+      }
+    },
+    "testimony": {
+      "reply": "Yes, I'm moving my savings. Someone from the bank's fraud team called and told me to move it to a safe account",
+      "otp_passes": true
+    }
+  },
+  {
     "name": "sanctioned_country",
     "description": "Merchant in a sanctioned country — blocked by a Tier 0 hard rule.",
     "expected": {

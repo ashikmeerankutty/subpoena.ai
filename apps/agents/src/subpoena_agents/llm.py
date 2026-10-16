@@ -201,7 +201,7 @@ class ScriptedLlm:
             value = self._explain(context)
         elif schema is TestimonyClaims:
             raw = re.sub(r"</?untrusted>", "", context["witness_message"])
-            value = self._extract(raw)
+            value = self._extract(raw, context.get("follow_up"))
         elif schema is ReceiptOut:
             value = self._read_receipt(images or [])
         else:
@@ -319,14 +319,34 @@ class ScriptedLlm:
         )
 
     @staticmethod
-    def _extract(text: str) -> TestimonyClaims:
-        t = text.strip().lower()
-        yes = re.match(r"^(yes|yeah|yep|y\b|it was me|that was me|i did)", t)
-        no = re.match(r"^(no|nope|n\b|not me|i didn)", t)
-        reason = re.sub(r"^(yes|yeah|yep|no|nope)[,.!\s-]*", "", text.strip(), flags=re.I) or None
+    def _extract(text: str, follow_up: dict[str, Any] | None = None) -> TestimonyClaims:
+        yes_re = r"^(yes|yeah|yep|y\b|it was me|that was me|i did)"
+        no_re = r"^(no\b|nope|n\b|not me|i didn)"
+        filler = r"^((yes|yeah|yep|no|nope|it was me|that was me|i did)\b[,.!\s-]*)+"
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        asks = (follow_up or {}).get("asks", [])
+        answer = re.sub(r"</?untrusted>", "", (follow_up or {}).get("answer", "")).strip().lower()
+        # The first reply carries the yes/no, unless the follow-up asked for it again.
+        first = answer if "confirm" in asks and answer else (lines[0].lower() if lines else "")
+        reason = " ".join(
+            r for r in (re.sub(filler, "", line, flags=re.I).strip() for line in lines) if r
+        )
+        t = text.lower()
+        told: bool | None = None
+        if re.search(r"told me to|asked me to|safe account|from the (bank|police)", t):
+            told = True
+        elif re.search(r"no ?one|nobody|my own", t):
+            told = False
+        elif "scam" in asks and answer:  # a bare YES/NO to "has anyone told you to pay?"
+            told = True if re.match(yes_re, answer) else False if re.match(no_re, answer) else None
         return TestimonyClaims(
-            confirms_transaction=True if yes else False if no else None,
-            stated_reason=reason,
+            confirms_transaction=True
+            if re.match(yes_re, first)
+            else False
+            if re.match(no_re, first)
+            else None,
+            stated_reason=reason or None,
             mentions_travel=bool(re.search(r"travel|trip|abroad|holiday|vacation", t)),
             sentiment="calm",
+            told_to_pay=told,
         )
