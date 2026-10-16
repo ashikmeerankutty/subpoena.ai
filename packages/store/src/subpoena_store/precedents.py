@@ -81,6 +81,14 @@ def cosine(a: Sequence[float], b: Sequence[float]) -> float:
     return dot / (na * nb) if na and nb else 0.0
 
 
+def payment_key(ev: Evaluation) -> str:
+    """The same cardholder paying the same amount to the same merchant: one payment, however
+    often it is sent. Its earlier rulings are excluded from its own precedent search."""
+    t = ev.transaction
+    raw = f"{t.user_id}|{t.amount:.2f}|{t.currency}|{t.merchant.name}|{t.merchant.mcc}"
+    return hashlib.sha1(raw.encode()).hexdigest()[:16]
+
+
 def case_text(ev: Evaluation, *, with_outcome: bool) -> tuple[str, list[str]]:
     """The searchable description of a case. Queries use the same shape without the outcome."""
     t = ev.transaction
@@ -156,12 +164,14 @@ class PrecedentLibrary:
         limit: int = 3,
         *,
         exclude_evaluation: str | None = None,
+        exclude_payment: str | None = None,
         min_similarity: float = 0.2,
     ) -> list[tuple[Precedent, float]]:
         items = [
             p
             for p in await self.all(workspace_id)
-            if exclude_evaluation is None or p.evaluation_id != exclude_evaluation
+            if (exclude_evaluation is None or p.evaluation_id != exclude_evaluation)
+            and (exclude_payment is None or p.payment_key != exclude_payment)
         ]
         if not items:
             return []
@@ -187,11 +197,12 @@ def precedent_for(
         tags=tags,
         source=source,
         evaluation_id=ev.evaluation_id,
+        payment_key=payment_key(ev),
     )
 
 
 def public(p: Precedent, similarity: float | None = None) -> dict[str, Any]:
-    out = p.model_dump(mode="json", exclude={"embedding", "workspace_id"})
+    out = p.model_dump(mode="json", exclude={"embedding", "workspace_id", "payment_key"})
     if similarity is not None:
         out["similarity"] = similarity
     return out

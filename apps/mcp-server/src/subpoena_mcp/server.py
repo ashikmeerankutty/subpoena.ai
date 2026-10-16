@@ -237,6 +237,15 @@ def _register_resources(server: MCPServer, deps: McpDeps) -> None:
         hits = await deps.precedents.search(workspace_id, query, limit=3)
         return {"query": query, "precedents": [public(p, sim) for p, sim in hits]}
 
+    @server.resource(
+        "precedents://{workspace_id}/search/{q}/excluding/{payment}", mime_type="application/json"
+    )
+    async def precedents_excluding(workspace_id: str, q: str, payment: str) -> dict[str, Any]:
+        """Past rulings most similar to the case, leaving out earlier rulings on this payment."""
+        query = unquote(q)
+        hits = await deps.precedents.search(workspace_id, query, limit=3, exclude_payment=payment)
+        return {"query": query, "precedents": [public(p, sim) for p, sim in hits]}
+
     @server.resource("policy://{tenant_id}/active", mime_type="application/json")
     async def policy(tenant_id: str) -> dict[str, Any]:
         """Active thresholds and subpoena rules for the workspace."""

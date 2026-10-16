@@ -25,6 +25,11 @@ class Precedent(Model):
     tags: list[str] = Field(default_factory=list)
     source: PrecedentSource = PrecedentSource.CASE
     evaluation_id: str | None = None
+    payment_key: str | None = Field(
+        default=None,
+        description="Fingerprint of the payment, so a re-submitted payment never cites its own "
+        "earlier rulings",
+    )
     embedding: list[float] | None = Field(default=None, description="Never returned by the API")
     embedding_model: str | None = None
     created_at: datetime = Field(default_factory=utcnow)

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
+from typing import Any
 
-from courtkit import Harness
+from courtkit import SCENARIOS, Harness
 from subpoena_agents.llm import LlmError
 from subpoena_schemas import (
     EvaluationStatus,
@@ -176,17 +177,34 @@ def test_rulings_become_precedents_for_later_cases(h: Harness) -> None:
         assert [p.evaluation_id for p in stored] == [first.evaluation_id]
         assert stored[0].label == "FRAUD" and "Ruled BLOCK" in stored[0].summary
 
-        second = await h.case("clear_fraud", transaction_id="tx_again")
+        amount = SCENARIOS["clear_fraud"]["request"]["amount"] + 1
+        second = await h.case("clear_fraud", transaction_id="tx_again", amount=amount)
         await h.court.run_case(second.evaluation_id)
-        events = await h.store.list_events(second.evaluation_id)
-        search = next(
-            e for e in events if e.type.value == "TOOL_CALL" and "precedents://" in str(e.payload)
-        )
-        return first, search.payload["result"]["precedents"]
+        return first, await _precedents_found(h, second.evaluation_id)
 
     first, found = run(go())
     assert found[0]["evaluation_id"] == first.evaluation_id  # the earlier ruling ranks first
     assert found[0]["similarity"] > 0.9
+
+
+def test_a_resent_payment_never_cites_its_own_earlier_ruling(h: Harness) -> None:
+    async def go():
+        await h.setup()
+        first = await h.court.run_case((await h.case("clear_fraud")).evaluation_id)
+        again = await h.case("clear_fraud", transaction_id="tx_resent")
+        await h.court.run_case(again.evaluation_id)
+        return first, await _precedents_found(h, again.evaluation_id)
+
+    first, found = run(go())
+    assert first.evaluation_id not in {p["evaluation_id"] for p in found}
+
+
+async def _precedents_found(h: Harness, evaluation_id: str) -> list[dict[str, Any]]:
+    events = await h.store.list_events(evaluation_id)
+    search = next(
+        e for e in events if e.type.value == "TOOL_CALL" and "precedents://" in str(e.payload)
+    )
+    return search.payload["result"]["precedents"]  # type: ignore[no-any-return]
 
 
 def test_bare_yes_gets_one_follow_up_before_the_testimony_counts(h: Harness) -> None:

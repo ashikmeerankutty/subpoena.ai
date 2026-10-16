@@ -59,6 +59,13 @@ if [ -f "$ROOT/.env.twilio" ]; then
   fi
 fi
 
+# Public demo login on the Console (optional): SUBPOENA_DEMO_LOGIN_KEY in .env.demo, an analyst
+# key for a sandbox workspace. Anyone who opens the Console can sign in with it.
+DEMO_LOGIN_KEY=""
+if [ -f "$ROOT/.env.demo" ]; then
+  DEMO_LOGIN_KEY=$(sed -n 's/^SUBPOENA_DEMO_LOGIN_KEY=//p' "$ROOT/.env.demo")
+fi
+
 GOOGLE=""
 if [ -f "$ROOT/.env.google" ]; then
   set -a; . "$ROOT/.env.google"; set +a
@@ -223,8 +230,9 @@ for pair in "court-evaluations:evaluations.created" "court-activity:subpoena.act
   fi
 done
 
+# The API and Console keep one warm instance so evaluators never wait on a cold start.
 echo "==> API"
-$G run deploy subpoena-api "${COMMON[@]}" --service-account="$(sa sp-api)" --no-invoker-iam-check \
+$G run deploy subpoena-api "${COMMON[@]/--min-instances=0/--min-instances=1}" --service-account="$(sa sp-api)" --no-invoker-iam-check \
   --memory=512Mi --max-instances=3 --concurrency=80 \
   --set-env-vars="$API_ENV" --set-secrets="$API_SECRETS"
 API_URL=$($G run services describe subpoena-api --region="$REGION" --format='value(status.url)')
@@ -236,8 +244,8 @@ fi
 
 echo "==> Console"
 $G run deploy subpoena-console --region="$REGION" --image="$REPO/console:$TAG" --service-account="$(sa sp-console)" \
-  --allow-unauthenticated --min-instances=0 --max-instances=2 --memory=512Mi \
-  --set-env-vars="SUBPOENA_API_URL=$API_URL${GOOGLE:+,GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID}" "${CONSOLE_ARGS[@]}"
+  --allow-unauthenticated --min-instances=1 --max-instances=2 --memory=512Mi \
+  --set-env-vars="SUBPOENA_API_URL=$API_URL${GOOGLE:+,GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID}${DEMO_LOGIN_KEY:+,DEMO_LOGIN_KEY=$DEMO_LOGIN_KEY}" "${CONSOLE_ARGS[@]}"
 CONSOLE_URL=$($G run services describe subpoena-console --region="$REGION" --format='value(status.url)')
 # OAuth redirects must use the URL registered with Google, not the request's internal origin.
 $G run services update subpoena-console --region="$REGION" --update-env-vars="CONSOLE_PUBLIC_URL=$CONSOLE_URL" >/dev/null

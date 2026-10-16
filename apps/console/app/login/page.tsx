@@ -47,22 +47,40 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [google, setGoogle] = useState<boolean | null>(null);
+  const [demoKey, setDemoKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     document.title = "Sign in · Subpoena.ai Console";
-    fetch("/api/auth/config").then((r) => r.json()).then((c: { google: boolean }) => setGoogle(c.google)).catch(() => setGoogle(false));
+    fetch("/api/auth/config").then((r) => r.json())
+      .then((c: { google: boolean; demo_key: string | null }) => { setGoogle(c.google); setDemoKey(c.demo_key); })
+      .catch(() => setGoogle(false));
     const slug = params.get("error");
     if (slug) setError(ERRORS[slug] ?? params.get("detail") ?? "Sign-in failed. Please try again.");
   }, [params]);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function signIn(secret: string) {
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/session", { method: "POST", body: JSON.stringify({ key: key.trim() }) });
+    const res = await fetch("/api/session", { method: "POST", body: JSON.stringify({ key: secret.trim() }) });
     setBusy(false);
     if (res.ok) router.replace("/");
     else setError(((await res.json()) as { error: string }).error);
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    void signIn(key);
+  }
+
+  async function copyDemoKey() {
+    if (!demoKey) return;
+    try {
+      await navigator.clipboard.writeText(demoKey);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
   }
 
   const keyForm = (
@@ -119,6 +137,27 @@ function LoginForm() {
               </Disclosure>
             </>
           ) : google === false ? keyForm : null}
+          {demoKey ? (
+            <Box marginTop="space90" padding="space60" borderStyle="solid" borderWidth="borderWidth10"
+              borderColor="colorBorderWeak" borderRadius="borderRadius30" backgroundColor="colorBackground">
+              <Text as="h3" fontWeight="fontWeightSemibold" marginBottom="space20">Demo login</Text>
+              <Text as="p" fontSize="fontSize20" color="colorTextWeak" marginBottom="space40">
+                For evaluators: an analyst key for a sandbox workspace. Send test payments from the API
+                Playground, watch the courtroom and answer as the witness on the simulated phone.
+              </Text>
+              <Box display="flex" columnGap="space30" alignItems="center" marginBottom="space40">
+                <Box as="code" flexGrow={1} minWidth="0" fontSize="fontSize20" padding="space20"
+                  backgroundColor="colorBackgroundStrong" borderRadius="borderRadius20"
+                  style={{ fontFamily: "monospace", overflowWrap: "anywhere" }}>
+                  {demoKey}
+                </Box>
+                <Button variant="secondary" size="small" onClick={copyDemoKey}>{copied ? "Copied" : "Copy"}</Button>
+              </Box>
+              <Button variant="primary" fullWidth loading={busy} onClick={() => void signIn(demoKey)}>
+                Sign in with the demo key
+              </Button>
+            </Box>
+          ) : null}
         </Box>
       </main>
     </div>

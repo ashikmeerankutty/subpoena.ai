@@ -8,6 +8,7 @@ from .precedents import (
     VertexEmbedder,
     build_embedder,
     case_text,
+    payment_key,
     precedent_for,
 )
 
@@ -27,5 +28,6 @@ __all__ = [
     "build_embedder",
     "build_media_store",
     "case_text",
+    "payment_key",
     "precedent_for",
 ]

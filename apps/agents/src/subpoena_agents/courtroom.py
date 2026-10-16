@@ -48,7 +48,14 @@ from subpoena_schemas import (
     utcnow,
 )
 from subpoena_schemas.evaluation import Evaluation
-from subpoena_store import MediaStore, MemoryMediaStore, Store, case_text, precedent_for
+from subpoena_store import (
+    MediaStore,
+    MemoryMediaStore,
+    Store,
+    case_text,
+    payment_key,
+    precedent_for,
+)
 
 from . import evidence, pricing, prompts, receipts
 from .llm import Llm, LlmError, LlmResult
@@ -233,7 +240,8 @@ class Courtroom:
         # Defense precedent search (embedding similarity over this workspace's rulings + seed).
         async with self.mcp.session(Agent.DEFENSE) as defense:
             q = quote(case_text(ev, with_outcome=False)[0], safe="")
-            found = await self._read(ev, defense, f"precedents://{ev.workspace_id}/search/{q}")
+            uri = f"precedents://{ev.workspace_id}/search/{q}/excluding/{payment_key(ev)}"
+            found = await self._read(ev, defense, uri)
         # Short citation IDs for the debate; the library ID stays alongside.
         precedents = [
             {**p, "precedent_id": p["id"], "id": f"P{i}"}
